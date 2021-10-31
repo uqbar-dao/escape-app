@@ -33,8 +33,11 @@ export default function App() {
     return (
       <SafeAreaProvider>
         {!shipUrl ? (
-          <View>
-            <Text>Welcome, please enter a ship url:</Text>
+          <View style={styles.shipInputView}>
+            <Text style={styles.title}>UrLand</Text>
+            <Text style={styles.welcome}>
+              Welcome, please enter a ship url:
+            </Text>
             <TextInput
               style={styles.input}
               onChangeText={setShipUrlInput}
@@ -58,5 +61,16 @@ const styles = StyleSheet.create({
     margin: 12,
     borderWidth: 1,
     padding: 10,
+  },
+  shipInputView: {
+    padding: 20,
+    alignItems: "center",
+  },
+  title: {
+    fontSize: 36,
+    fontWeight: "600",
+  },
+  welcome: {
+    marginTop: 24,
   },
 });

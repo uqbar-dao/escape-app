@@ -7,7 +7,7 @@ import {
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import * as React from "react";
-import { ColorSchemeName, Pressable } from "react-native";
+import { ColorSchemeName, Pressable, View } from "react-native";
 
 import Colors from "../constants/Colors";
 import useColorScheme from "../hooks/useColorScheme";
@@ -20,6 +20,9 @@ import {
   RootTabScreenProps,
 } from "../types";
 import LinkingConfiguration from "./LinkingConfiguration";
+import Grid from "../screens/Grid";
+import Bitcoin from "../screens/Bitcoin";
+import HeaderBar from "../components/HeaderBar";
 
 export default function Navigation({
   colorScheme,
@@ -47,7 +50,7 @@ function RootNavigator() {
     <Stack.Navigator>
       <Stack.Screen
         name="Root"
-        component={Groups}
+        component={BottomTabNavigator}
         options={{ headerShown: false }}
       />
       <Stack.Screen
@@ -66,50 +69,52 @@ function RootNavigator() {
  * A bottom tab navigator displays tab buttons on the bottom of the display to switch screens.
  * https://reactnavigation.org/docs/bottom-tab-navigator
  */
-// const BottomTab = createBottomTabNavigator<RootTabParamList>();
+const BottomTab = createBottomTabNavigator<RootTabParamList>();
 
-// function BottomTabNavigator() {
-// const colorScheme = useColorScheme();
+function BottomTabNavigator() {
+  const colorScheme = useColorScheme();
 
-// return (
-// <BottomTab.Navigator
-// initialRouteName="TabOne"
-// screenOptions={{
-// tabBarActiveTintColor: Colors[colorScheme].tint,
-// }}>
-// <BottomTab.Screen
-// name="TabOne"
-// component={TabOneScreen}
-// options={({ navigation }: RootTabScreenProps<'TabOne'>) => ({
-// title: 'Tab One',
-// tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-// headerRight: () => (
-// <Pressable
-// onPress={() => navigation.navigate('Modal')}
-// style={({ pressed }) => ({
-// opacity: pressed ? 0.5 : 1,
-// })}>
-// <FontAwesome
-// name="info-circle"
-// size={25}
-// color={Colors[colorScheme].text}
-// style={{ marginRight: 15 }}
-// />
-// </Pressable>
-// ),
-// })}
-// />
-// <BottomTab.Screen
-// name="TabTwo"
-// component={TabTwoScreen}
-// options={{
-// title: 'Tab Two',
-// tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-// }}
-// />
-// </BottomTab.Navigator>
-// );
-// }
+  return (
+    <BottomTab.Navigator
+      initialRouteName="Grid"
+      screenOptions={{
+        tabBarActiveTintColor: Colors[colorScheme].tint,
+      }}
+    >
+      <BottomTab.Screen
+        name="Groups"
+        component={Groups}
+        options={({ navigation }: RootTabScreenProps<"Groups">) => ({
+          title: "Groups",
+          tabBarIcon: ({ color }) => <TabBarIcon name="users" color={color} />,
+          headerRight: () => <HeaderBar navigation={navigation} />,
+        })}
+      />
+      <BottomTab.Screen
+        name="Bitcoin"
+        component={Bitcoin}
+        options={({ navigation }: RootTabScreenProps<"Bitcoin">) => ({
+          title: "Bitcoin",
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon name="bitcoin" color={color} />
+          ),
+          headerRight: () => <HeaderBar navigation={navigation} />,
+        })}
+      />
+      <BottomTab.Screen
+        name="Grid"
+        component={Grid}
+        options={({ navigation }: RootTabScreenProps<"Grid">) => ({
+          title: "Grid",
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon name="th-large" color={color} />
+          ),
+          headerRight: () => <HeaderBar navigation={navigation} />,
+        })}
+      />
+    </BottomTab.Navigator>
+  );
+}
 
 /**
  * You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
