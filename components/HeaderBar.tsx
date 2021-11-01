@@ -23,7 +23,7 @@ const HeaderBar = ({ navigation }: any) => {
         />
       </Pressable>
       <Pressable
-        onPress={() => navigation.navigate("Modal")}
+        onPress={() => navigation.navigate("Settings")}
         style={({ pressed }) => ({
           opacity: pressed ? 0.5 : 1,
         })}

@@ -11,7 +11,6 @@ import { ColorSchemeName, Pressable, View } from "react-native";
 
 import Colors from "../constants/Colors";
 import useColorScheme from "../hooks/useColorScheme";
-import ModalScreen from "../screens/ModalScreen";
 import NotFoundScreen from "../screens/NotFoundScreen";
 import Groups from "../screens/Groups";
 import {
@@ -23,6 +22,7 @@ import LinkingConfiguration from "./LinkingConfiguration";
 import Grid from "../screens/Grid";
 import Bitcoin from "../screens/Bitcoin";
 import HeaderBar from "../components/HeaderBar";
+import SettingsScreen from "../screens/SettingsScreen";
 
 export default function Navigation({
   colorScheme,
@@ -59,7 +59,7 @@ function RootNavigator() {
         options={{ title: "Oops!" }}
       />
       <Stack.Group screenOptions={{ presentation: "modal" }}>
-        <Stack.Screen name="Modal" component={ModalScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
       </Stack.Group>
     </Stack.Navigator>
   );
