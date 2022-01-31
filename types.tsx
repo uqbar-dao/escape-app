@@ -31,7 +31,7 @@ export type RootTabParamList = {
   // TabOne: undefined;
   // TabTwo: undefined;
   Grid: undefined;
-  Groups: undefined;
+  Escape: undefined;
   Bitcoin: undefined;
 };
 

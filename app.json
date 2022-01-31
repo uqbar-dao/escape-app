@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "UrLand",
-    "slug": "UrLand",
-    "version": "1.0.0",
+    "name": "EScape",
+    "slug": "escape-app",
+    "version": "0.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",

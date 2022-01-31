@@ -4,5 +4,5 @@ import Webview from "../components/WebView";
 
 export default function Grid() {
   const { shipUrl } = useStore();
-  return <Webview url={`${shipUrl}/apps/grid`} />;
+  return <Webview url={`${shipUrl}/apps/grid/`} />;
 }

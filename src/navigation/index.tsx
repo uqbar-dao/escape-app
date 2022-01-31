@@ -1,3 +1,4 @@
+import React, { ComponentProps } from 'react';
 import { FontAwesome } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import {
@@ -6,18 +7,17 @@ import {
   DarkTheme,
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import * as React from "react";
-import { ColorSchemeName, Pressable, View } from "react-native";
+import { ColorSchemeName } from "react-native";
 
 import Colors from "../constants/Colors";
 import useColorScheme from "../hooks/useColorScheme";
 import NotFoundScreen from "../screens/NotFoundScreen";
-import Groups from "../screens/Groups";
+import Escape from "../screens/Escape";
 import {
   RootStackParamList,
   RootTabParamList,
   RootTabScreenProps,
-} from "../types";
+} from "../../types";
 import LinkingConfiguration from "./LinkingConfiguration";
 import Grid from "../screens/Grid";
 import Bitcoin from "../screens/Bitcoin";
@@ -76,25 +76,27 @@ function BottomTabNavigator() {
 
   return (
     <BottomTab.Navigator
-      initialRouteName="Grid"
+      initialRouteName="Escape"
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme].tint,
       }}
     >
       <BottomTab.Screen
-        name="Groups"
-        component={Groups}
-        options={({ navigation }: RootTabScreenProps<"Groups">) => ({
-          title: "Groups",
-          tabBarIcon: ({ color }) => <TabBarIcon name="users" color={color} />,
+        name="Escape"
+        component={Escape}
+        options={({ navigation }: RootTabScreenProps<"Escape">) => ({
+          title: "EScape",
+          tabBarItemStyle: { paddingVertical: 4 },
+          tabBarIcon: ({ color }) => <TabBarIcon name="circle" color={color} />,
           headerRight: () => <HeaderBar navigation={navigation} />,
         })}
       />
-      <BottomTab.Screen
+      {/*<BottomTab.Screen
         name="Bitcoin"
         component={Bitcoin}
         options={({ navigation }: RootTabScreenProps<"Bitcoin">) => ({
           title: "Bitcoin",
+          tabBarItemStyle: { paddingVertical: 4 },
           tabBarIcon: ({ color }) => (
             <TabBarIcon name="bitcoin" color={color} />
           ),
@@ -106,12 +108,13 @@ function BottomTabNavigator() {
         component={Grid}
         options={({ navigation }: RootTabScreenProps<"Grid">) => ({
           title: "Grid",
+          tabBarItemStyle: { paddingVertical: 4 },
           tabBarIcon: ({ color }) => (
             <TabBarIcon name="th-large" color={color} />
           ),
           headerRight: () => <HeaderBar navigation={navigation} />,
         })}
-      />
+      />*/}
     </BottomTab.Navigator>
   );
 }
@@ -120,8 +123,8 @@ function BottomTabNavigator() {
  * You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
  */
 function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>["name"];
+  name: ComponentProps<typeof FontAwesome>["name"];
   color: string;
 }) {
-  return <FontAwesome size={30} style={{ marginBottom: -3 }} {...props} />;
+  return <FontAwesome size={24} style={{ marginBottom: -4 }} {...props} />;
 }

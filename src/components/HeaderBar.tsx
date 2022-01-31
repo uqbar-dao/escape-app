@@ -10,19 +10,6 @@ const HeaderBar = ({ navigation }: any) => {
   return (
     <View style={{ flexDirection: "row" }}>
       <Pressable
-        onPress={() => navigation.navigate("Modal")}
-        style={({ pressed }) => ({
-          opacity: pressed ? 0.5 : 1,
-        })}
-      >
-        <FontAwesome
-          name="bell"
-          size={25}
-          color={Colors[colorScheme].text}
-          style={{ marginRight: 15 }}
-        />
-      </Pressable>
-      <Pressable
         onPress={() => navigation.navigate("Settings")}
         style={({ pressed }) => ({
           opacity: pressed ? 0.5 : 1,
