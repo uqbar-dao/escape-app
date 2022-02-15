@@ -74,11 +74,15 @@ const BottomTab = createBottomTabNavigator<RootTabParamList>();
 function BottomTabNavigator() {
   const colorScheme = useColorScheme();
 
+  // TODO: once the mobile nav scheme is worked out, replace this
+  // return <Escape />;
+
   return (
     <BottomTab.Navigator
       initialRouteName="Escape"
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme].tint,
+        tabBarHideOnKeyboard: true,
       }}
     >
       <BottomTab.Screen

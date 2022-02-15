@@ -1,1 +1,1 @@
-export const SHIP_COOKIE_REGEX = /(?<=~)[a-z\-]+?(?=\=)/;
+export const URBIT_HOME_REGEX = /\<title\>Urbit • Home<\/title>/i;

@@ -1,7 +1,7 @@
 import create from "zustand";
 import storage from "../util/storage";
 
-interface ShipConnection {
+export interface ShipConnection {
   ship: string;
   shipUrl: string;
   authCookie?: string;

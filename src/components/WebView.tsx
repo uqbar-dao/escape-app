@@ -8,7 +8,7 @@ interface WebviewProps {
 }
 
 const Webview = ({ url, onMessage }: WebviewProps) => {
-  const webView = useRef(null);
+  const webView = useRef<any>(null);
   const [canGoBack, setCanGoBack] = useState(false);
   const [webViewKey, setWebViewKey] = useState(0);
 
@@ -29,7 +29,7 @@ const Webview = ({ url, onMessage }: WebviewProps) => {
 
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (appState.current.match(/inactive|background/) && nextAppState === "active") {
-        webView.current?.reload();
+        webView.current?.injectJavaScript('window.bootstrapApi(true)');
       }
 
       appState.current = nextAppState;
@@ -51,6 +51,12 @@ const Webview = ({ url, onMessage }: WebviewProps) => {
     setCanGoBack(event.canGoBack);
   }, [setCanGoBack]);
 
+  const modifiedUrl = new URL(url);
+  const mobileAppParams = new URLSearchParams(modifiedUrl.search);
+  mobileAppParams.append('isMobileApp', 'true');
+  modifiedUrl.search = mobileAppParams.toString();
+  const uri = modifiedUrl.toString();
+
   return (
     <SafeAreaView style={styles.container}>
       <WebView
@@ -60,9 +66,7 @@ const Webview = ({ url, onMessage }: WebviewProps) => {
         scalesPageToFit
         sharedCookiesEnabled
         ref={webView}
-        source={{
-          uri: url,
-        }}
+        source={{ uri }}
         onNavigationStateChange={onNavStateChange}
         onMessage={onMessage}
       />

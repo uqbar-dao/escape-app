@@ -10,6 +10,7 @@ import useStore from "./src/hooks/useStore";
 import Navigation from "./src/navigation";
 import LoginScreen from "./src/screens/Login";
 import storage from "./src/util/storage";
+import { URBIT_HOME_REGEX } from "./src/util/regex";
 
 // TODO: move this somewhere else
 Notifications.setNotificationHandler({
@@ -26,19 +27,23 @@ export default function App() {
   const isLoadingComplete = useCachedResources();
   const colorScheme = useColorScheme();
   // TODO: store this in local storage
-  const { loading, setLoading, ship, shipUrl, authCookie, loadStore } = useStore();
+  const { loading, setLoading, ship, shipUrl, loadStore } = useStore();
   const [needLogin, setNeedLogin] = useState(true);
   
   useEffect(() => {
     storage
       .load({ key: 'store' })
       .then((res) => {
+        console.log(1, res)
         if (res?.shipUrl) {
+          console.log(2)
           fetch(res.shipUrl)
             .then(async (response) => {
               const html = await response.text();
+              console.log(3, html)
 
-              if (html.match(/<title>Urbit • Home<\/title>/i)) {
+              if (URBIT_HOME_REGEX.test(html)) {
+                console.log(4)
                 loadStore(res);
                 setNeedLogin(false);
               }
@@ -54,18 +59,17 @@ export default function App() {
     return <View style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
       <ActivityIndicator size="large" color="#000000" />
     </View>
-  } else {
-    return (
-      <SafeAreaProvider>
-        {needLogin && !shipUrl && !ship ? (
-          <LoginScreen />
-        ) : (
-          <Navigation colorScheme={colorScheme} />
-        )}
-        <StatusBar translucent={false} />
-      </SafeAreaProvider>
-    );
   }
+  return (
+    <SafeAreaProvider>
+      {needLogin && !shipUrl && !ship ? (
+        <LoginScreen />
+      ) : (
+        <Navigation colorScheme={colorScheme} />
+      )}
+      <StatusBar translucent />
+    </SafeAreaProvider>
+  );
 }
 
 const styles = StyleSheet.create({
