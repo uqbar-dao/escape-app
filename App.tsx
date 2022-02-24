@@ -26,33 +26,24 @@ Notifications.setNotificationHandler({
 export default function App() {
   const isLoadingComplete = useCachedResources();
   const colorScheme = useColorScheme();
-  // TODO: store this in local storage
-  const { loading, setLoading, ship, shipUrl, loadStore } = useStore();
-  const [needLogin, setNeedLogin] = useState(true);
+  const { loading, setLoading, ship, shipUrl, authCookie, loadStore, needLogin, setNeedLogin } = useStore();
   
   useEffect(() => {
-    storage
-      .load({ key: 'store' })
-      .then((res) => {
-        console.log(1, res)
-        if (res?.shipUrl) {
-          console.log(2)
-          fetch(res.shipUrl)
-            .then(async (response) => {
-              const html = await response.text();
-              console.log(3, html)
+    const loadStorage = async () => {
+      const res = await storage.load({ key: 'store' }).catch(console.error);
+      if (res?.shipUrl) {
+        const response = await fetch(res.shipUrl).catch(console.error);
+        const html = await response?.text();
 
-              if (URBIT_HOME_REGEX.test(html)) {
-                console.log(4)
-                loadStore(res);
-                setNeedLogin(false);
-              }
-            })
-            .catch(console.error)
+        if (html && URBIT_HOME_REGEX.test(html)) {
+          loadStore(res);
+          setNeedLogin(false);
         }
-      })
-      .catch(console.error)
-      .finally(() => setTimeout(() => setLoading(false), 1000));
+      }
+      
+      setTimeout(() => setLoading(false), 500)
+    }
+    loadStorage();
   }, []);
 
   if (!isLoadingComplete || loading) {
@@ -60,9 +51,10 @@ export default function App() {
       <ActivityIndicator size="large" color="#000000" />
     </View>
   }
+
   return (
     <SafeAreaProvider>
-      {needLogin && !shipUrl && !ship ? (
+      {(needLogin && (!shipUrl || !ship || !authCookie)) ? (
         <LoginScreen />
       ) : (
         <Navigation colorScheme={colorScheme} />

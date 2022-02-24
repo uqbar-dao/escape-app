@@ -2,14 +2,23 @@
   "expo": {
     "name": "EScape",
     "slug": "escape-app",
-    "version": "1.0.0",
+    "version": "1.0.4",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/uqbar-logo.png",
     "notification": {
       "icon": "./local/assets/notification-icon.png",
       "color": "#ffffff"
     },
-    "scheme": "myapp",
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./local/assets/notification-icon.png",
+          "color": "#ffffff"
+        }
+      ]
+    ],
+    "scheme": "default",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
@@ -26,14 +35,27 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "network.uqbar.escape",
-      "buildNumber": "1.0.0"
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "network.uqbar.escape"
+      "googleServicesFile": "./google-services.json",
+      "versionCode": 4,
+      "package": "network.uqbar.escape",
+      "permissions": [
+        "com.google.android.c2dm.permission.RECEIVE",
+        "com.anddoes.launcher.permission.UPDATE_COUNT",
+        "com.majeur.launcher.permission.UPDATE_BADGE",
+        "com.google.android.providers.gsf.permission.READ_GSERVICES",
+        "com.sonyericsson.home.permission.BROADCAST_BADGE",
+        "com.htc.launcher.permission.READ_SETTINGS",
+        "com.htc.launcher.permission.UPDATE_SHORTCUT",
+        "com.sec.android.provider.badge.permission.READ",
+        "com.sec.android.provider.badge.permission.WRITE"
+      ]
     },
     "web": {
       "favicon": "./assets/images/favicon.png"

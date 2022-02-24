@@ -5,15 +5,38 @@ import * as Notifications from 'expo-notifications';
 
 import useStore, { ShipConnection } from "../hooks/useStore";
 import Webview from "../components/WebView";
+import { AppState, AppStateStatus, View } from "react-native";
+import { getPushNotificationToken } from "../util/notification";
 
-function EscapeWindow({ shipConnection }: { shipConnection: ShipConnection }) {
-  const { ship, setShip } = useStore();
+interface EscapeWindowProps {
+  shipConnection: ShipConnection;
+  pushNotificationsToken: string;
+  androidHardwareAccelerationDisabled?: boolean;
+}
+
+function EscapeWindow({
+  shipConnection,
+  pushNotificationsToken,
+  androidHardwareAccelerationDisabled = false
+}: EscapeWindowProps) {
+  const { ship, setShip, removeShip } = useStore();
   const { shipUrl } = shipConnection;
   const [url, setUrl] = useState(`${shipUrl}/apps/escape/`);
   const [currentPath, setCurrentPath] = useState('/');
 
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (nextAppState.match(/inactive|background/)) {
+        setCurrentPath('/');
+      }
+    }
+
+    AppState.addEventListener("change", handleAppStateChange);
+  }, []);
+
   const onMessage = (event: WebViewMessageEvent) => {
     const { type, body, pathname, redirect } = JSON.parse(event.nativeEvent.data);
+
     if (type === 'hark-notification') {
       const [redirectBaseUrl] = redirect?.split('?');
       if (redirectBaseUrl === currentPath) {
@@ -34,6 +57,8 @@ function EscapeWindow({ shipConnection }: { shipConnection: ShipConnection }) {
       });
     } else if (type === 'navigation-change') {
       setCurrentPath(pathname);
+    } else if (type === 'logout') {
+      removeShip(shipConnection.ship);
     }
   };
 
@@ -49,21 +74,36 @@ function EscapeWindow({ shipConnection }: { shipConnection: ShipConnection }) {
     });
     return () => subscription.remove();
   }, []);
+
+  useEffect(() => {
+    if (!url.includes(shipConnection.shipUrl)) {
+      setUrl(`${shipConnection.shipUrl}/apps/escape/`)
+    }
+  }, [shipConnection]);
   
-  return <Webview {...{ url, onMessage }} />;
+  return <Webview {...{ url, onMessage, androidHardwareAccelerationDisabled, pushNotificationsToken }} />;
 }
 
 export default function Escape() {
   const { ship, shipUrl, authCookie, ships, setShip } = useStore();
-  
-  const backgroundShips = ships.filter((s) => s.ship !== ship);
-  // - Display them as a stack of elements
-  // - The first one should be the currently selected one
-  // - Pass ship as a prop to EScape
-  // - Selecting a notification should select the ship
+  const [token, setToken] = useState('');
 
+  useEffect(() => {
+    getPushNotificationToken()
+      .then((token) => {
+        if (token) {
+          setToken(token);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  const backgroundShips = ships.filter((s) => s.ship !== ship);
+  
   return <>
-    {backgroundShips.map((s) => <EscapeWindow shipConnection={s} key={s.ship} />)}
-    <EscapeWindow shipConnection={{ ship, shipUrl, authCookie }} />
+    {backgroundShips.map((s) => <View key={s.ship} >
+      <EscapeWindow shipConnection={s} pushNotificationsToken={token} androidHardwareAccelerationDisabled />
+    </View>)}
+    <EscapeWindow shipConnection={{ ship, shipUrl, authCookie }} pushNotificationsToken={token} />
   </>;
 }

@@ -1,14 +1,22 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { AppState, AppStateStatus, BackHandler, Platform, SafeAreaView, StyleSheet } from "react-native";
+import { AppState, AppStateStatus, BackHandler, Platform, SafeAreaView, StyleSheet, useColorScheme } from "react-native";
 import { WebView, WebViewMessageEvent, WebViewNavigation } from "react-native-webview";
 
 interface WebviewProps {
   url: string;
+  pushNotificationsToken: string;
   onMessage?: (event: WebViewMessageEvent) => void;
+  androidHardwareAccelerationDisabled?: boolean;
 }
 
-const Webview = ({ url, onMessage }: WebviewProps) => {
+const Webview = ({
+  url,
+  pushNotificationsToken,
+  onMessage,
+  androidHardwareAccelerationDisabled = false
+}: WebviewProps) => {
   const webView = useRef<any>(null);
+  const colorScheme = useColorScheme()
   const [canGoBack, setCanGoBack] = useState(false);
   const [webViewKey, setWebViewKey] = useState(0);
 
@@ -21,6 +29,28 @@ const Webview = ({ url, onMessage }: WebviewProps) => {
     }
     return false;
   }, [webView.current]);
+
+  const storePushNotificationsToken = useCallback(() => {
+    if (pushNotificationsToken && webView.current) {
+      console.log('TOKEN', pushNotificationsToken)
+      setTimeout(() => {
+        webView.current.injectJavaScript(
+`window.api.poke({
+  app: "settings-store",
+  mark: "settings-event",
+  json: {
+    "put-entry": {
+      "desk": "landscape",
+      "bucket-key": "escapeApp",
+      "entry-key": "expoToken",
+      "value": "${pushNotificationsToken}",
+    }
+  }
+});`
+        );
+      }, 10000);
+    }
+  }, [pushNotificationsToken, webView.current]);
 
   useEffect(() => {
     if (Platform.OS === "android") {
@@ -51,11 +81,8 @@ const Webview = ({ url, onMessage }: WebviewProps) => {
     setCanGoBack(event.canGoBack);
   }, [setCanGoBack]);
 
-  const modifiedUrl = new URL(url);
-  const mobileAppParams = new URLSearchParams(modifiedUrl.search);
-  mobileAppParams.append('isMobileApp', 'true');
-  modifiedUrl.search = mobileAppParams.toString();
-  const uri = modifiedUrl.toString();
+  const mobileParam = 'isMobileApp=true';
+  const uri = `${url}${url.includes('?') ? '&' : '?'}${mobileParam}`;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -69,6 +96,9 @@ const Webview = ({ url, onMessage }: WebviewProps) => {
         source={{ uri }}
         onNavigationStateChange={onNavStateChange}
         onMessage={onMessage}
+        androidHardwareAccelerationDisabled={androidHardwareAccelerationDisabled}
+        forceDarkOn={colorScheme === 'dark'}
+        onLoadEnd={storePushNotificationsToken}
       />
     </SafeAreaView>
   );

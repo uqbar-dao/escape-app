@@ -49,9 +49,12 @@ function RootNavigator() {
   return (
     <Stack.Navigator>
       <Stack.Screen
-        name="Root"
-        component={BottomTabNavigator}
-        options={{ headerShown: false }}
+        name="EScape"
+        component={Escape}
+        options={({ navigation }) => ({
+          title: "EScape",
+          headerRight: () => <HeaderBar navigation={navigation} />,
+        })}
       />
       <Stack.Screen
         name="NotFound"
@@ -90,7 +93,7 @@ function BottomTabNavigator() {
         component={Escape}
         options={({ navigation }: RootTabScreenProps<"Escape">) => ({
           title: "EScape",
-          tabBarItemStyle: { paddingVertical: 4 },
+          tabBarItemStyle: { display: 'none' },
           tabBarIcon: ({ color }) => <TabBarIcon name="circle" color={color} />,
           headerRight: () => <HeaderBar navigation={navigation} />,
         })}
