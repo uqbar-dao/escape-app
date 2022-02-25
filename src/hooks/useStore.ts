@@ -9,6 +9,7 @@ export interface ShipConnection {
 
 interface Store {
   loading: boolean;
+  escapeInstalled: boolean;
   needLogin: boolean;
   ship: string;
   shipUrl: string;
@@ -18,6 +19,7 @@ interface Store {
   loadStore: (store: any) => void;
   setShipUrl: (shipUrl: string) => void;
   setLoading: (loading: boolean) => void;
+  setEscapeInstalled: (escapeInstalled: boolean) => void;
   addShip: (ship: ShipConnection) => void;
   removeShip: (ship: string) => void;
   removeAllShips: () => void;
@@ -27,6 +29,7 @@ interface Store {
 
 const useStore = create<Store>((set) => ({
   loading: true,
+  escapeInstalled: true,
   needLogin: true,
   ship: '',
   shipUrl: '',
@@ -36,6 +39,7 @@ const useStore = create<Store>((set) => ({
   loadStore: (store: any) => set(() => store),
   setShipUrl: (shipUrl: string) => set({ shipUrl }),
   setLoading: (loading: boolean) => set({ loading }),
+  setEscapeInstalled: (escapeInstalled: boolean) =>set({ escapeInstalled }),
   addShip: (newShip: ShipConnection) => set(({ ships, ship, authCookie, shipUrl }) => {
     const shipSet = Boolean(ship && shipUrl && authCookie);
     const newStore: any = {

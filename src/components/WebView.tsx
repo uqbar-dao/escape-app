@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { AppState, AppStateStatus, BackHandler, Platform, SafeAreaView, StyleSheet, useColorScheme } from "react-native";
 import { WebView, WebViewMessageEvent, WebViewNavigation } from "react-native-webview";
+import { WebViewErrorEvent, WebViewHttpErrorEvent } from "react-native-webview/lib/WebViewTypes";
+import useStore from "../hooks/useStore";
 
 interface WebviewProps {
   url: string;
@@ -16,9 +18,10 @@ const Webview = ({
   androidHardwareAccelerationDisabled = false
 }: WebviewProps) => {
   const webView = useRef<any>(null);
-  const colorScheme = useColorScheme()
+  const colorScheme = useColorScheme();
   const [canGoBack, setCanGoBack] = useState(false);
   const [webViewKey, setWebViewKey] = useState(0);
+  const { setEscapeInstalled } = useStore();
 
   const appState = useRef(AppState.currentState);
 
@@ -41,8 +44,8 @@ const Webview = ({
   json: {
     "put-entry": {
       "desk": "landscape",
-      "bucket-key": "escapeApp",
-      "entry-key": "expoToken",
+      "bucket-key": "escape-app",
+      "entry-key": "expo-token",
       "value": "${pushNotificationsToken}",
     }
   }
@@ -77,6 +80,12 @@ const Webview = ({
     setTimeout(() => setWebViewKey(webViewKey + 1), 10);
   }, [url]);
 
+  const handleUrlError = useCallback((event: WebViewHttpErrorEvent) => {
+    if (event.nativeEvent.statusCode === 404) {
+      setEscapeInstalled(false);
+    }
+  }, [setEscapeInstalled]);
+
   const onNavStateChange = useCallback((event: WebViewNavigation) => {
     setCanGoBack(event.canGoBack);
   }, [setCanGoBack]);
@@ -88,6 +97,7 @@ const Webview = ({
     <SafeAreaView style={styles.container}>
       <WebView
         key={webViewKey}
+        onHttpError={handleUrlError}
         style={styles.webview}
         allowsBackForwardNavigationGestures
         scalesPageToFit

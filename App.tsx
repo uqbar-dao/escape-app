@@ -1,6 +1,6 @@
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as Notifications from 'expo-notifications';
 
@@ -26,7 +26,7 @@ Notifications.setNotificationHandler({
 export default function App() {
   const isLoadingComplete = useCachedResources();
   const colorScheme = useColorScheme();
-  const { loading, setLoading, ship, shipUrl, authCookie, loadStore, needLogin, setNeedLogin } = useStore();
+  const { loading, setLoading, escapeInstalled, ship, shipUrl, authCookie, loadStore, needLogin, setNeedLogin } = useStore();
   
   useEffect(() => {
     const loadStorage = async () => {
@@ -49,6 +49,14 @@ export default function App() {
   if (!isLoadingComplete || loading) {
     return <View style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
       <ActivityIndicator size="large" color="#000000" />
+    </View>
+  }
+
+  if (!escapeInstalled) {
+    return <View style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
+      <Text style={{ fontSize: 16, lineHeight: 24, padding: 32 }}>
+        EScape is not installed on your urbit. Please install it from ~dister-fabnev-hinmur and then restart this app.
+      </Text>
     </View>
   }
 

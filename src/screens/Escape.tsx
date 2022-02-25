@@ -64,8 +64,10 @@ function EscapeWindow({
 
   useEffect(() => {
     const subscription = Notifications.addNotificationResponseReceivedListener(notification => {
-      const redirect = notification?.notification?.request?.content?.data?.redirect;
-      if (redirect) {
+      console.log('GOT NOTIFICATION', JSON.stringify(notification))
+      const redirect = notification?.notification?.request?.content?.data?.redirect as string;
+      const ship = notification?.notification?.request?.content?.data?.ship as string;
+      if (redirect && ship) {
         if (ship !== shipConnection.ship) {
           setShip(ship);
         }
