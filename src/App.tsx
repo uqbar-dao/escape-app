@@ -1,16 +1,17 @@
+import 'react-native-gesture-handler';
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as Notifications from 'expo-notifications';
 
-import useCachedResources from "./src/hooks/useCachedResources";
-import useColorScheme from "./src/hooks/useColorScheme";
-import useStore from "./src/hooks/useStore";
-import Navigation from "./src/navigation";
-import LoginScreen from "./src/screens/Login";
-import storage from "./src/util/storage";
-import { URBIT_HOME_REGEX } from "./src/util/regex";
+import useCachedResources from "./hooks/useCachedResources";
+import useColorScheme from "./hooks/useColorScheme";
+import useStore from "./hooks/useStore";
+import Navigation from "./navigation";
+import LoginScreen from "./screens/Login";
+import storage from "./util/storage";
+import { URBIT_HOME_REGEX } from "./util/regex";
 
 // TODO: move this somewhere else
 Notifications.setNotificationHandler({
@@ -61,7 +62,7 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider style={{ backgroundColor: colorScheme === 'dark' ? 'black' : 'white', height: '100%', width: '100%' }}>
       {(needLogin && (!shipUrl || !ship || !authCookie)) ? (
         <LoginScreen />
       ) : (

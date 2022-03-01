@@ -5,7 +5,7 @@ import * as Notifications from 'expo-notifications';
 
 import useStore, { ShipConnection } from "../hooks/useStore";
 import Webview from "../components/WebView";
-import { AppState, AppStateStatus, View } from "react-native";
+import { AppState, AppStateStatus, StyleSheet, View } from "react-native";
 import { getPushNotificationToken } from "../util/notification";
 
 interface EscapeWindowProps {
@@ -64,17 +64,17 @@ function EscapeWindow({
 
   useEffect(() => {
     const subscription = Notifications.addNotificationResponseReceivedListener(notification => {
-      console.log('GOT NOTIFICATION', JSON.stringify(notification))
       const redirect = notification?.notification?.request?.content?.data?.redirect as string;
-      const ship = notification?.notification?.request?.content?.data?.ship as string;
-      if (redirect && ship) {
-        if (ship !== shipConnection.ship) {
-          setShip(ship);
+      const targetShip = notification?.notification?.request?.content?.data?.ship as string;
+      if (redirect && targetShip) {
+        if (targetShip !== shipConnection.ship) {
+          setShip(targetShip);
+        } else {
+          setUrl(`${shipConnection.shipUrl}/apps/escape${redirect}`);
         }
-        setUrl(`${shipUrl}/apps/escape${redirect}`);
       }
     });
-    return () => subscription.remove();
+    return subscription.remove;
   }, []);
 
   useEffect(() => {
@@ -82,12 +82,12 @@ function EscapeWindow({
       setUrl(`${shipConnection.shipUrl}/apps/escape/`)
     }
   }, [shipConnection]);
-  
+
   return <Webview {...{ url, onMessage, androidHardwareAccelerationDisabled, pushNotificationsToken }} />;
 }
 
 export default function Escape() {
-  const { ship, shipUrl, authCookie, ships, setShip } = useStore();
+  const { ship, shipUrl, authCookie, ships } = useStore();
   const [token, setToken] = useState('');
 
   useEffect(() => {
@@ -100,12 +100,26 @@ export default function Escape() {
       .catch(console.error);
   }, []);
 
-  const backgroundShips = ships.filter((s) => s.ship !== ship);
-  
+  const sortedShips = ships.sort((a, b) => {
+    if (a.ship === ship) {
+      return -1;
+    } else if (b.ship === ship) {
+      return 1;
+    } else {
+      return 0;
+    }
+  });
+
   return <>
-    {backgroundShips.map((s) => <View key={s.ship} >
-      <EscapeWindow shipConnection={s} pushNotificationsToken={token} androidHardwareAccelerationDisabled />
+    {ships.map((s) => <View key={s.ship} style={s.ship === ship ? styles.primary : {}}>
+      <EscapeWindow shipConnection={s} pushNotificationsToken={token} androidHardwareAccelerationDisabled={s.ship !== ship} />
     </View>)}
-    <EscapeWindow shipConnection={{ ship, shipUrl, authCookie }} pushNotificationsToken={token} />
   </>;
 }
+
+const styles = StyleSheet.create({
+  primary: {
+    width: '100%',
+    height: '100%',
+  },
+});

@@ -35,7 +35,6 @@ const Webview = ({
 
   const storePushNotificationsToken = useCallback(() => {
     if (pushNotificationsToken && webView.current) {
-      console.log('TOKEN', pushNotificationsToken)
       setTimeout(() => {
         webView.current.injectJavaScript(
 `window.api.poke({
