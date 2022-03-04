@@ -19,9 +19,8 @@ function EscapeWindow({
   pushNotificationsToken,
   androidHardwareAccelerationDisabled = false
 }: EscapeWindowProps) {
-  const { ship, setShip, removeShip } = useStore();
-  const { shipUrl } = shipConnection;
-  const [url, setUrl] = useState(`${shipUrl}/apps/escape/`);
+  const { setShip, removeShip, setPath } = useStore();
+  const { ship, shipUrl, path } = shipConnection;
   const [currentPath, setCurrentPath] = useState('/');
 
   useEffect(() => {
@@ -32,6 +31,7 @@ function EscapeWindow({
     }
 
     AppState.addEventListener("change", handleAppStateChange);
+    setPath(ship, '/apps/escape/')
   }, []);
 
   const onMessage = (event: WebViewMessageEvent) => {
@@ -58,7 +58,7 @@ function EscapeWindow({
     } else if (type === 'navigation-change') {
       setCurrentPath(pathname);
     } else if (type === 'logout') {
-      removeShip(shipConnection.ship);
+      removeShip(ship);
     }
   };
 
@@ -67,23 +67,20 @@ function EscapeWindow({
       const redirect = notification?.notification?.request?.content?.data?.redirect as string;
       const targetShip = notification?.notification?.request?.content?.data?.ship as string;
       if (redirect && targetShip) {
-        if (targetShip !== shipConnection.ship) {
+        if (targetShip !== ship) {
           setShip(targetShip);
         } else {
-          setUrl(`${shipConnection.shipUrl}/apps/escape${redirect}`);
+          setPath(ship, `/apps/escape${redirect}`);
         }
       }
     });
     return subscription.remove;
   }, []);
 
-  useEffect(() => {
-    if (!url.includes(shipConnection.shipUrl)) {
-      setUrl(`${shipConnection.shipUrl}/apps/escape/`)
-    }
-  }, [shipConnection]);
-
-  return <Webview {...{ url, onMessage, androidHardwareAccelerationDisabled, pushNotificationsToken }} />;
+  
+  const url = `${shipUrl}${path || '/apps/escape/'}`.toLowerCase();
+  
+  return <Webview {...{ url, onMessage, androidHardwareAccelerationDisabled, pushNotificationsToken, ship }} />;
 }
 
 export default function Escape() {

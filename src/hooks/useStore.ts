@@ -4,6 +4,7 @@ import storage from "../util/storage";
 export interface ShipConnection {
   ship: string;
   shipUrl: string;
+  path: string;
   authCookie?: string;
 }
 
@@ -20,6 +21,7 @@ interface Store {
   setShipUrl: (shipUrl: string) => void;
   setLoading: (loading: boolean) => void;
   setEscapeInstalled: (escapeInstalled: boolean) => void;
+  setPath: (targetShip: string, path: string) => void;
   addShip: (ship: ShipConnection) => void;
   removeShip: (ship: string) => void;
   removeAllShips: () => void;
@@ -40,6 +42,19 @@ const useStore = create<Store>((set) => ({
   setShipUrl: (shipUrl: string) => set({ shipUrl }),
   setLoading: (loading: boolean) => set({ loading }),
   setEscapeInstalled: (escapeInstalled: boolean) =>set({ escapeInstalled }),
+  setPath: (ship: string, path: string) => set(({ ships }) => {
+    const shipConnection = ships.find((s) => s.ship === ship);
+    if (shipConnection) {
+      shipConnection.path = path;
+    }
+    
+    const newStore: any = {
+      ships: [...ships.filter((s) => s.ship !== ship), shipConnection],
+    };
+
+    storage.save({ key: 'store', data: newStore });
+    return newStore;
+  }),
   addShip: (newShip: ShipConnection) => set(({ ships, ship, authCookie, shipUrl }) => {
     const shipSet = Boolean(ship && shipUrl && authCookie);
     const newStore: any = {

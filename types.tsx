@@ -20,7 +20,7 @@ export type RootStackParamList = {
   Root: NavigatorScreenParams<RootTabParamList> | undefined;
   EScape: NavigatorScreenParams<RootTabParamList> | undefined;
   Modal: undefined;
-  Settings: undefined;
+  Ships: undefined;
   NotFound: undefined;
 };
 

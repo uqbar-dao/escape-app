@@ -1,15 +1,9 @@
-import React, { ComponentProps, useCallback } from 'react';
-import { ColorSchemeName, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { ComponentProps } from 'react';
+import { ColorSchemeName, Platform, StyleSheet, View } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import {
-  NavigationContainer,
-  DefaultTheme,
-  DarkTheme,
-} from "@react-navigation/native";
+import { NavigationContainer, DefaultTheme, DarkTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import { Ionicons } from '@expo/vector-icons';
 
 import Colors from "../constants/Colors";
 import useColorScheme from "../hooks/useColorScheme";
@@ -23,12 +17,10 @@ import {
 import LinkingConfiguration from "./LinkingConfiguration";
 import Grid from "../screens/Grid";
 import Bitcoin from "../screens/Bitcoin";
-import HeaderBar from "../components/HeaderBar";
-import SettingsScreen from "../screens/SettingsScreen";
-import useStore from '../hooks/useStore';
+import ShipsScreen from "../screens/ShipsScreen";
+import ShipSelector from "../components/header/ShipSelector";
+import GridSelector from "../components/header/GridSelector";
 import Sigil from '../components/Sigil';
-
-const Drawer = createDrawerNavigator();
 
 export default function Navigation({
   colorScheme,
@@ -40,57 +32,8 @@ export default function Navigation({
       linking={LinkingConfiguration}
       theme={colorScheme === "dark" ? DarkTheme : DefaultTheme}
     >
-      <Drawer.Navigator initialRouteName="Home" screenOptions={{ header: () => null }} drawerContent={DrawerContent}>
-        <Drawer.Screen name="Home" component={RootNavigator} />
-      </Drawer.Navigator>
+      <RootNavigator />
     </NavigationContainer>
-  );
-}
-
-function DrawerContent({ navigation }: any) {
-  const { ship, ships, setShip } = useStore();
-  const backgroundShips = ships.filter((s) => s.ship !== ship);
-  const colorScheme = useColorScheme();
-
-  const selectShip = useCallback((ship: string) => () => {
-    setShip(ship);
-    navigation.closeDrawer();
-  }, [setShip]);
-
-  return (
-    <View style={styles.drawerContainer}>
-      <ScrollView style={styles.drawerScroll}>
-        <View style={styles.shipEntry}>
-          {/* <Sigil ship={ship} /> */}
-          <Text style={styles.primaryShip(colorScheme === 'dark')}>{ship}</Text>
-        </View>
-        {backgroundShips.map(({ ship }) => <TouchableOpacity key={ship} onPress={selectShip(ship)}>
-          <View style={styles.shipEntry}>
-            {/* <Sigil ship={ship} /> */}
-            <Text style={styles.secondaryShip(colorScheme === 'dark')}>
-              {ship}
-            </Text>
-          </View>
-        </TouchableOpacity>)}
-      </ScrollView>
-    </View>
-  );
-}
-
-function DrawerToggle({
-  navigation
-}: any) {
-  const { ship } = useStore();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-
-  return (
-    <TouchableOpacity style={styles.changeShip} onPress={navigation.openDrawer}>
-      <View style={{ display: 'flex', flexDirection: 'row' }}>
-        <Ionicons name="swap-horizontal" size={20} color={isDark ? 'white' : 'black'} />
-        <Text style={styles.changeShipText(isDark)}>{ship}</Text>
-      </View>
-    </TouchableOpacity>
   );
 }
 
@@ -107,8 +50,9 @@ function RootNavigator() {
         name="EScape"
         component={Escape}
         options={({ navigation }) => ({
-          headerTitle: () => <DrawerToggle navigation={navigation} />,
-          headerRight: () => <HeaderBar navigation={navigation} />,
+          headerLeft: () => <ShipSelector navigation={navigation} />,
+          headerTitle: () => <View />,
+          headerRight: () => <GridSelector navigation={navigation} />,
         })}
       />
       <Stack.Screen
@@ -117,7 +61,7 @@ function RootNavigator() {
         options={{ title: "Oops!" }}
       />
       <Stack.Group screenOptions={{ presentation: "modal" }}>
-        <Stack.Screen name="Settings" component={SettingsScreen} />
+        <Stack.Screen name="Ships" component={ShipsScreen} />
       </Stack.Group>
     </Stack.Navigator>
   );
@@ -145,9 +89,10 @@ function BottomTabNavigator() {
         component={Escape}
         options={({ navigation }: RootTabScreenProps<"Escape">) => ({
           tabBarItemStyle: { display: 'none' },
-          headerTitle: () => <DrawerToggle navigation={navigation} />,
+          headerLeft: () => <ShipSelector navigation={navigation} />,
+          headerTitle: () => <View />,
+          headerRight: () => <GridSelector navigation={navigation} />,
           tabBarIcon: ({ color }) => <TabBarIcon name="circle" color={color} />,
-          headerRight: () => <HeaderBar navigation={navigation} />,
         })}
       />
       {/*<BottomTab.Screen
@@ -159,7 +104,7 @@ function BottomTabNavigator() {
           tabBarIcon: ({ color }) => (
             <TabBarIcon name="bitcoin" color={color} />
           ),
-          headerRight: () => <HeaderBar navigation={navigation} />,
+          headerRight: () => <ShipSelector navigation={navigation} />,
         })}
       />
       <BottomTab.Screen
@@ -171,7 +116,7 @@ function BottomTabNavigator() {
           tabBarIcon: ({ color }) => (
             <TabBarIcon name="th-large" color={color} />
           ),
-          headerRight: () => <HeaderBar navigation={navigation} />,
+          headerRight: () => <ShipSelector navigation={navigation} />,
         })}
       />*/}
     </BottomTab.Navigator>
@@ -225,7 +170,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: dark ? 'white' : 'black',
-    fontFamily: 'monospace',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     marginLeft: 16,
   }),
 });

@@ -1,27 +1,32 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { AppState, AppStateStatus, BackHandler, Platform, SafeAreaView, StyleSheet, useColorScheme } from "react-native";
+import { Alert, AppState, AppStateStatus, BackHandler, Dimensions, Platform, SafeAreaView, StyleSheet, useColorScheme } from "react-native";
 import { WebView, WebViewMessageEvent, WebViewNavigation } from "react-native-webview";
-import { WebViewErrorEvent, WebViewHttpErrorEvent } from "react-native-webview/lib/WebViewTypes";
+import { WebViewHttpErrorEvent } from "react-native-webview/lib/WebViewTypes";
+import { APP_URL_REGEX, ESCAPE_URL_REGEX, GRID_URL_REGEX, LANDSCAPE_URL_REGEX, ESCAPE_DISTRO_SHIP } from '../constants/Webview';
 import useStore from "../hooks/useStore";
 
 interface WebviewProps {
   url: string;
-  pushNotificationsToken: string;
+  ship: string;
+  pushNotificationsToken?: string;
   onMessage?: (event: WebViewMessageEvent) => void;
   androidHardwareAccelerationDisabled?: boolean;
 }
 
 const Webview = ({
   url,
+  ship,
   pushNotificationsToken,
   onMessage,
   androidHardwareAccelerationDisabled = false
 }: WebviewProps) => {
+  const { setLoading, setPath } = useStore();
   const webView = useRef<any>(null);
   const colorScheme = useColorScheme();
   const [canGoBack, setCanGoBack] = useState(false);
   const [webViewKey, setWebViewKey] = useState(0);
-  const { setEscapeInstalled } = useStore();
+  const [escapeInstalled, setEscapeInstalled] = useState(true);
+  const [downloadEscape, setDownloadEscape] = useState(false);
 
   const appState = useRef(AppState.currentState);
 
@@ -33,10 +38,11 @@ const Webview = ({
     return false;
   }, [webView.current]);
 
-  const storePushNotificationsToken = useCallback(() => {
-    if (pushNotificationsToken && webView.current) {
-      setTimeout(() => {
-        webView.current.injectJavaScript(
+  const onLoadEnd = useCallback(() => {
+    if (webView.current) {
+      if (ESCAPE_URL_REGEX.test(url) && pushNotificationsToken) {
+        setTimeout(() => {
+          webView.current.injectJavaScript(
 `window.api.poke({
   app: "settings-store",
   mark: "settings-event",
@@ -49,10 +55,57 @@ const Webview = ({
     }
   }
 });`
+          );
+        }, 10000);
+      }
+
+      if (GRID_URL_REGEX.test(url) && !escapeInstalled && !downloadEscape) {
+        Alert.alert(
+          "Install EScape",
+          "EScape is not installed, would you like to install it?",
+          [
+            {
+              text: "No",
+              onPress: () => null,
+              style: "cancel",
+            },
+            {
+              text: "Yes",
+              onPress: () => {
+                setDownloadEscape(true);
+                if (setPath) {
+                  setPath(ship, '/apps/landscape/');
+                  setLoading(true);
+                }
+              },
+              style: "default",
+            },
+          ],
+          { cancelable: true }
         );
-      }, 10000);
+      }
+
+      if (LANDSCAPE_URL_REGEX.test(url) && !escapeInstalled && downloadEscape) {
+        setTimeout(() => {
+          webView.current.injectJavaScript(
+`window.api.subscribeOnce("treaty", "/treaty/${ESCAPE_DISTRO_SHIP}/escape", 20000);
+window.api.poke({ app: "docket", json: "${ESCAPE_DISTRO_SHIP}/escape", mark: "docket-install" });`
+          );
+          setEscapeInstalled(true);
+          if (setPath) {
+            setPath(ship, '/apps/grid/');
+            Alert.alert(
+              "Installing EScape",
+              `EScape should now be installing, if it does not install please install manually from ${ESCAPE_DISTRO_SHIP}. \n\nTap on the EScape tile to open it when installation is complete.`,
+              [{ text: "OK", style: "cancel" }],
+              { cancelable: true }
+            )
+          }
+          setLoading(false);
+        }, 2000);
+      }
     }
-  }, [pushNotificationsToken, webView.current]);
+  }, [ship, pushNotificationsToken, webView.current, escapeInstalled, downloadEscape, url, setPath]);
 
   useEffect(() => {
     if (Platform.OS === "android") {
@@ -80,34 +133,46 @@ const Webview = ({
   }, [url]);
 
   const handleUrlError = useCallback((event: WebViewHttpErrorEvent) => {
-    if (event.nativeEvent.statusCode === 404) {
+    if (event.nativeEvent.statusCode === 404 && ESCAPE_URL_REGEX.test(url)) {
       setEscapeInstalled(false);
+      if (setPath) {
+        setPath(ship, '/apps/grid/');
+      }
     }
-  }, [setEscapeInstalled]);
+  }, [setEscapeInstalled, url, ship]);
 
   const onNavStateChange = useCallback((event: WebViewNavigation) => {
     setCanGoBack(event.canGoBack);
-  }, [setCanGoBack]);
+
+    if (GRID_URL_REGEX.test(url) && !GRID_URL_REGEX.test(event.url)) {
+      const appUrl = event.url.match(APP_URL_REGEX);
+      setPath(ship, appUrl ? appUrl[0] : '/apps/escape/');
+    }
+  }, [url, setCanGoBack]);
 
   const mobileParam = 'isMobileApp=true';
-  const uri = `${url}${url.includes('?') ? '&' : '?'}${mobileParam}`;
+  let uri = url;
+  if (ESCAPE_URL_REGEX.test(url)) {
+    uri = `${url}${url.includes('?') ? '&' : '?'}${mobileParam}`;
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <WebView
         key={webViewKey}
-        onHttpError={handleUrlError}
-        style={styles.webview}
+        ref={webView}
+        source={{ uri }}
+        startInLoadingState
         allowsBackForwardNavigationGestures
         scalesPageToFit
         sharedCookiesEnabled
-        ref={webView}
-        source={{ uri }}
-        onNavigationStateChange={onNavStateChange}
-        onMessage={onMessage}
         androidHardwareAccelerationDisabled={androidHardwareAccelerationDisabled}
         forceDarkOn={colorScheme === 'dark'}
-        onLoadEnd={storePushNotificationsToken}
+        setSupportMultipleWindows={!uri.includes('/apps/grid/')}
+        onMessage={onMessage}
+        onNavigationStateChange={onNavStateChange}
+        onHttpError={handleUrlError}
+        onLoadEnd={onLoadEnd}
       />
     </SafeAreaView>
   );
@@ -116,9 +181,13 @@ const Webview = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    height: '100%',
+    width: '100%',
   },
   webview: {
     flex: 1,
+    height: '100%',
+    width: '100%',
   },
 });
 

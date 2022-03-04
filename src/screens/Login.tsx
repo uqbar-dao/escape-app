@@ -28,12 +28,12 @@ export default function LoginScreen() {
             const authCookieHeader = response.headers.get('set-cookie') || 'valid';
             if (typeof authCookieHeader === 'string' && authCookieHeader?.includes('urbauth-~')) {
               const ship = getShipFromCookie(authCookieHeader);
-              addShip({ ship, shipUrl, authCookie: authCookieHeader });
+              addShip({ ship, shipUrl, authCookie: authCookieHeader, path: '/apps/escape/' });
             }
           } else {
             const stringMatch = html.match(/<input value="~.*?" disabled="true"/i) || [];
             const urbitId = stringMatch[0]?.slice(14, -17);
-            if (urbitId) addShip({ ship: urbitId, shipUrl });
+            if (urbitId) addShip({ ship: urbitId, shipUrl, path: '/apps/escape/' });
           }
         })
         .catch(console.error)
@@ -47,11 +47,13 @@ export default function LoginScreen() {
   const handleSaveUrl = useCallback(async () => {
     setFormLoading(true);
     // const regExpPattern = /^(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,}))\.?)(?::\d{2,5})?$/i;
-    const regExpPattern = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/i;
+    const leadingHttpRegex = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/i;
+    const noPrefixRegex = /^[A-Za-z0-9]+\.([\w#!:.?+=&%@!\-\/])+$/i;
 
-    const formattedUrl = (shipUrlInput.endsWith("/") ? shipUrlInput.slice(0, shipUrlInput.length - 1) : shipUrlInput).replace('/apps/escape', '');
+    const prefixedUrl = noPrefixRegex.test(shipUrlInput) && !leadingHttpRegex.test(shipUrlInput) ? `https://${shipUrlInput}` : shipUrlInput;
+    const formattedUrl = (prefixedUrl.endsWith("/") ? prefixedUrl.slice(0, prefixedUrl.length - 1) : prefixedUrl).replace('/apps/escape', '');
 
-    if (!formattedUrl.match(regExpPattern)) {
+    if (!formattedUrl.match(leadingHttpRegex)) {
       setUrlProblem('Please enter a valid ship URL.');
     } else {
       let isValid = false;
@@ -69,13 +71,13 @@ export default function LoginScreen() {
         if (typeof authCookieHeader === 'string' && authCookieHeader?.includes('urbauth-~')) {
           // TODO: handle expired auth or determine if auth has already expired
           const ship = getShipFromCookie(authCookieHeader);
-          addShip({ ship, shipUrl: formattedUrl, authCookie: authCookieHeader });
+          addShip({ ship, shipUrl: formattedUrl, authCookie: authCookieHeader, path: '/apps/escape/' });
         } else {
           const html = await response?.text();
           if (html) {
             const stringMatch = html.match(/<input value="~.*?" disabled="true"/i) || [];
             const ship = stringMatch[0]?.slice(14, -17);
-            if (ship) addShip({ ship, shipUrl: formattedUrl });
+            if (ship) addShip({ ship, shipUrl: formattedUrl, path: '/apps/escape/' });
           }
         }
       } else {
@@ -107,7 +109,7 @@ export default function LoginScreen() {
           if (!authCookieHeader) {
             setLoginProblem('Please enter a valid access key.');
           } else {
-            addShip({ ship, shipUrl, authCookie: authCookieHeader })
+            addShip({ ship, shipUrl, authCookie: authCookieHeader, path: '/apps/escape/' })
           }
         })
         .catch((err) => {
@@ -187,10 +189,10 @@ export default function LoginScreen() {
           <Button color={PURPLE} title="Log in with a different ID" onPress={changeUrl} />
         </>
       )}
-      {ships.length > 0 && (
+      {ships.length > 1 && (
         <>
           <View style={{ height: 8 }} />
-          <Button color={PURPLE} title="Cancel" onPress={() => setShip(ships[0].ship)} />
+          <Button color={PURPLE} title="Cancel" onPress={() => setShip(ships[1].ship)} />
         </>
       )}
     </View>

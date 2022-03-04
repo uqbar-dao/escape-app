@@ -28,6 +28,7 @@ export default function App() {
   const isLoadingComplete = useCachedResources();
   const colorScheme = useColorScheme();
   const { loading, setLoading, escapeInstalled, ship, shipUrl, authCookie, loadStore, needLogin, setNeedLogin } = useStore();
+  const isDark = colorScheme === 'dark';
   
   useEffect(() => {
     const loadStorage = async () => {
@@ -47,28 +48,22 @@ export default function App() {
     loadStorage();
   }, []);
 
-  if (!isLoadingComplete || loading) {
-    return <View style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
-      <ActivityIndicator size="large" color="#000000" />
-    </View>
-  }
-
-  if (!escapeInstalled) {
-    return <View style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ fontSize: 16, lineHeight: 24, padding: 32 }}>
-        EScape is not installed on your urbit. Please install it from ~dister-fabnev-hinmur and then restart this app.
-      </Text>
-    </View>
-  }
+  const backgroundColor = isDark ? 'black' : 'white';
+  const loaderColor = isDark ? 'white' : 'black';
 
   return (
-    <SafeAreaProvider style={{ backgroundColor: colorScheme === 'dark' ? 'black' : 'white', height: '100%', width: '100%' }}>
+    <SafeAreaProvider style={{ backgroundColor, height: '100%', width: '100%' }}>
       {(needLogin && (!shipUrl || !ship || !authCookie)) ? (
         <LoginScreen />
       ) : (
         <Navigation colorScheme={colorScheme} />
       )}
       <StatusBar translucent />
+      {(!isLoadingComplete || loading) && (
+        <View style={{ ...styles.loadingOverlay, backgroundColor }}>
+          <ActivityIndicator size="large" color={loaderColor} />
+        </View>
+      )}
     </SafeAreaProvider>
   );
 }
@@ -90,4 +85,16 @@ const styles = StyleSheet.create({
   welcome: {
     marginTop: 24,
   },
+  loadingOverlay: {
+    height: '100%',
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+  }
 });
