@@ -13,17 +13,6 @@ import LoginScreen from "./screens/Login";
 import storage from "./util/storage";
 import { URBIT_HOME_REGEX } from "./util/regex";
 
-// TODO: move this somewhere else
-Notifications.setNotificationHandler({
-  handleNotification: async () => {
-    return {
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: true,
-    };
-  },
-});
-
 export default function App() {
   const isLoadingComplete = useCachedResources();
   const colorScheme = useColorScheme();

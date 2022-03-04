@@ -6,7 +6,8 @@ import * as Notifications from 'expo-notifications';
 import useStore, { ShipConnection } from "../hooks/useStore";
 import Webview from "../components/WebView";
 import { AppState, AppStateStatus, StyleSheet, View } from "react-native";
-import { getPushNotificationToken } from "../util/notification";
+import { getNotificationData, getPushNotificationToken } from "../util/notification";
+import { deSig } from "../util/string";
 
 interface EscapeWindowProps {
   shipConnection: ShipConnection;
@@ -19,19 +20,17 @@ function EscapeWindow({
   pushNotificationsToken,
   androidHardwareAccelerationDisabled = false
 }: EscapeWindowProps) {
-  const { setShip, removeShip, setPath } = useStore();
-  const { ship, shipUrl, path } = shipConnection;
-  const [currentPath, setCurrentPath] = useState('/');
+  const { ship: selectedShip, setShip, removeShip, setPath, setCurrentPath } = useStore();
+  const { ship, shipUrl, path, currentPath } = shipConnection;
 
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (nextAppState.match(/inactive|background/)) {
-        setCurrentPath('/');
+        setCurrentPath(ship, '/');
       }
     }
 
     AppState.addEventListener("change", handleAppStateChange);
-    setPath(ship, '/apps/escape/')
   }, []);
 
   const onMessage = (event: WebViewMessageEvent) => {
@@ -56,16 +55,29 @@ function EscapeWindow({
         trigger: { seconds: 1 }
       });
     } else if (type === 'navigation-change') {
-      setCurrentPath(pathname);
+      setCurrentPath(ship, pathname);
     } else if (type === 'logout') {
       removeShip(ship);
     }
   };
 
   useEffect(() => {
-    const subscription = Notifications.addNotificationResponseReceivedListener(notification => {
-      const redirect = notification?.notification?.request?.content?.data?.redirect as string;
-      const targetShip = notification?.notification?.request?.content?.data?.ship as string;
+    Notifications.setNotificationHandler({
+      handleNotification: async (notification) => {
+        const { redirect, targetShip } = getNotificationData(notification);
+
+        if (deSig(targetShip) === deSig(selectedShip) && currentPath && redirect.includes(currentPath)) {
+          return { shouldShowAlert: false, shouldPlaySound: false, shouldSetBadge: false };
+        }
+
+        return { shouldShowAlert: true, shouldPlaySound: true, shouldSetBadge: true };
+      },
+    });
+  }, [currentPath, selectedShip]);
+
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(notificationResponse => {
+      const { redirect, targetShip } = getNotificationData(notificationResponse?.notification);
       if (redirect && targetShip) {
         if (targetShip !== ship) {
           setShip(targetShip);
@@ -77,7 +89,6 @@ function EscapeWindow({
     return subscription.remove;
   }, []);
 
-  
   const url = `${shipUrl}${path || '/apps/escape/'}`.toLowerCase();
   
   return <Webview {...{ url, onMessage, androidHardwareAccelerationDisabled, pushNotificationsToken, ship }} />;
