@@ -1,11 +1,24 @@
 {
   "expo": {
-    "name": "UrLand",
-    "slug": "UrLand",
-    "version": "1.0.0",
+    "name": "EScape",
+    "slug": "escape-app",
+    "version": "1.0.7",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "icon": "./assets/images/uqbar-logo.png",
+    "notification": {
+      "icon": "./local/assets/notification-icon.png",
+      "color": "#ffffff"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./local/assets/notification-icon.png",
+          "color": "#ffffff"
+        }
+      ]
+    ],
+    "scheme": "default",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
@@ -13,34 +26,39 @@
       "backgroundColor": "#ffffff"
     },
     "updates": {
+      "enabled": true,
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "network.uqbar.escape",
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "googleServicesFile": "./google-services.json",
+      "versionCode": 7,
+      "package": "network.uqbar.escape",
+      "permissions": [
+        "com.google.android.c2dm.permission.RECEIVE",
+        "com.anddoes.launcher.permission.UPDATE_COUNT",
+        "com.majeur.launcher.permission.UPDATE_BADGE",
+        "com.google.android.providers.gsf.permission.READ_GSERVICES",
+        "com.sonyericsson.home.permission.BROADCAST_BADGE",
+        "com.htc.launcher.permission.READ_SETTINGS",
+        "com.htc.launcher.permission.UPDATE_SHORTCUT",
+        "com.sec.android.provider.badge.permission.READ",
+        "com.sec.android.provider.badge.permission.WRITE"
+      ]
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
-    },
-    "plugins": [
-      [
-        "expo-notifications",
-        {
-          "icon": "./local/assets/notification-icon.png",
-          "color": "#ffffff",
-          "sounds": [
-            "./local/assets/notification-sound.wav",
-            "./local/assets/notification-sound-other.wav"
-          ],
-          "mode": "production"
-        }
-      ]
-    ]
+    }
   }
 }
