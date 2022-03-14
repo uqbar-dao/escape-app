@@ -2,7 +2,7 @@
   "expo": {
     "name": "EScape",
     "slug": "escape-app",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "orientation": "portrait",
     "icon": "./assets/images/uqbar-logo.png",
     "notification": {
@@ -23,7 +23,7 @@
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#000000"
     },
     "updates": {
       "enabled": true,
@@ -43,7 +43,7 @@
         "backgroundColor": "#ffffff"
       },
       "googleServicesFile": "./google-services.json",
-      "versionCode": 7,
+      "versionCode": 8,
       "package": "network.uqbar.escape",
       "permissions": [
         "com.google.android.c2dm.permission.RECEIVE",

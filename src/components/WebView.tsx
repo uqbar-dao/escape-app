@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Alert, AppState, AppStateStatus, BackHandler, Dimensions, Platform, SafeAreaView, StyleSheet, useColorScheme } from "react-native";
+import { Alert, AppState, AppStateStatus, BackHandler, Platform, Pressable, SafeAreaView, StyleSheet, useColorScheme } from "react-native";
 import { WebView, WebViewMessageEvent, WebViewNavigation } from "react-native-webview";
 import { WebViewHttpErrorEvent } from "react-native-webview/lib/WebViewTypes";
+import { Ionicons } from "@expo/vector-icons";
 import { APP_URL_REGEX, ESCAPE_URL_REGEX, GRID_URL_REGEX, LANDSCAPE_URL_REGEX, ESCAPE_DISTRO_SHIP } from '../constants/Webview';
 import useStore from "../hooks/useStore";
 
 interface WebviewProps {
   url: string;
   ship: string;
+  shipUrl: string;
   pushNotificationsToken?: string;
   onMessage?: (event: WebViewMessageEvent) => void;
   androidHardwareAccelerationDisabled?: boolean;
@@ -16,6 +18,7 @@ interface WebviewProps {
 const Webview = ({
   url,
   ship,
+  shipUrl,
   pushNotificationsToken,
   onMessage,
   androidHardwareAccelerationDisabled = false
@@ -24,6 +27,7 @@ const Webview = ({
   const webView = useRef<any>(null);
   const colorScheme = useColorScheme();
   const [canGoBack, setCanGoBack] = useState(false);
+  const [currentUrl, setCurrentUrl] = useState(url);
   const [webViewKey, setWebViewKey] = useState(0);
   const [escapeInstalled, setEscapeInstalled] = useState(true);
   const [downloadEscape, setDownloadEscape] = useState(false);
@@ -143,18 +147,21 @@ window.api.poke({ app: "docket", json: "${ESCAPE_DISTRO_SHIP}/escape", mark: "do
 
   const onNavStateChange = useCallback((event: WebViewNavigation) => {
     setCanGoBack(event.canGoBack);
+    setCurrentUrl(event.url);
 
     if (GRID_URL_REGEX.test(url) && !GRID_URL_REGEX.test(event.url)) {
       const appUrl = event.url.match(APP_URL_REGEX);
-      setPath(ship, appUrl ? appUrl[0] : '/apps/escape/');
+      setPath(ship, appUrl ? appUrl[0] : 'outside-site');
     }
-  }, [url, setCanGoBack]);
+  }, [url, setCanGoBack, setCurrentUrl]);
 
   const mobileParam = 'isMobileApp=true';
   let uri = url;
   if (ESCAPE_URL_REGEX.test(url)) {
     uri = `${url}${url.includes('?') ? '&' : '?'}${mobileParam}`;
   }
+
+  console.log(shipUrl, currentUrl)
 
   return (
     <SafeAreaView style={styles.container}>
@@ -173,7 +180,11 @@ window.api.poke({ app: "docket", json: "${ESCAPE_DISTRO_SHIP}/escape", mark: "do
         onNavigationStateChange={onNavStateChange}
         onHttpError={handleUrlError}
         onLoadEnd={onLoadEnd}
+        pullToRefreshEnabled
       />
+      {!currentUrl.includes(shipUrl.toLowerCase()) && <Pressable style={styles.backButton} onPress={() => webView?.current.goBack()}>
+        <Ionicons name="arrow-back" size={24} color='black' />
+      </Pressable>}
     </SafeAreaView>
   );
 };
@@ -183,11 +194,24 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
     width: '100%',
+    position: 'relative',
   },
   webview: {
     flex: 1,
     height: '100%',
     width: '100%',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    height: 40,
+    width: 40,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderBottomRightRadius: 8,
   },
 });
 

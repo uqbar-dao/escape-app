@@ -7,10 +7,10 @@ import { PURPLE } from "../style/colors";
 import { URBIT_HOME_REGEX } from "../util/regex";
 
 const SHIP_COOKIE_REGEX = /(~)[a-z\-]+?(\=)/;
-const getShipFromCookie = (cookie: string) => cookie.match(SHIP_COOKIE_REGEX)![0].slice(1, -1);
+const getShipFromCookie = (cookie: string) => cookie.match(SHIP_COOKIE_REGEX)![0].slice(0, -1);
 
 export default function LoginScreen() {
-  const { ships, ship, shipUrl, addShip, clearShip, setShipUrl, setShip } = useStore();
+  const { ships, ship, shipUrl, authCookie, addShip, clearShip, setShipUrl, setShip } = useStore();
   const [shipUrlInput, setShipUrlInput] = useState('');
   const [accessKeyInput, setAccessKeyInput] = useState('');
   const [urlProblem, setUrlProblem] = useState<string | null>();
@@ -125,6 +125,8 @@ export default function LoginScreen() {
     </View>
   }
 
+  console.log(ship, shipUrl)
+
   return (
     <View style={styles.shipInputView}>
       <View style={{ alignItems: 'center', marginTop: 60 }}>
@@ -189,10 +191,10 @@ export default function LoginScreen() {
           <Button color={PURPLE} title="Log in with a different ID" onPress={changeUrl} />
         </>
       )}
-      {ships.length > 1 && (
+      {(ships.length > 0 && !authCookie) && (
         <>
           <View style={{ height: 8 }} />
-          <Button color={PURPLE} title="Cancel" onPress={() => setShip(ships[1].ship)} />
+          <Button color={PURPLE} title="Cancel" onPress={() => setShip(ships[0].ship)} />
         </>
       )}
     </View>

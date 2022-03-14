@@ -1,5 +1,6 @@
 import create from "zustand";
 import storage from "../util/storage";
+import { deSig } from "../util/string";
 
 export interface ShipConnection {
   ship: string;
@@ -38,7 +39,7 @@ const getNewStore = (store: Store, targetShip: string, shipConnection: ShipConne
   return {
     ships: [...ships.filter((s) => s.ship !== targetShip), shipConnection],
     ship: shipSet ? ship : shipConnection.ship,
-    shipUrl: shipSet ? shipUrl : shipConnection.shipUrl,
+    shipUrl: (shipSet ? shipUrl : shipConnection.shipUrl).toLowerCase(),
     authCookie: shipSet ? authCookie : shipConnection.authCookie,
   };
 }
@@ -79,7 +80,8 @@ const useStore = create<Store>((set) => ({
     return newStore;
   }),
   addShip: (shipConnection: ShipConnection) => set((store) => {
-    const newStore: any = getNewStore(store, shipConnection.ship, shipConnection!);
+    const { ship } = shipConnection;
+    const newStore: any = getNewStore(store, shipConnection.ship, { ...shipConnection, ship: `~${deSig(ship)}` });
     
     storage.save({ key: 'store', data: newStore });
     return newStore;
