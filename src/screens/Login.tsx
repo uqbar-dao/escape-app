@@ -125,8 +125,6 @@ export default function LoginScreen() {
     </View>
   }
 
-  console.log(ship, shipUrl)
-
   return (
     <View style={styles.shipInputView}>
       <View style={{ alignItems: 'center', marginTop: 60 }}>
@@ -147,6 +145,7 @@ export default function LoginScreen() {
             onChangeText={setShipUrlInput}
             value={shipUrlInput}
             placeholder="http(s)://your-ship.net"
+            keyboardType="url"
           />
           {urlProblem && (
             <Text style={{ color: "red" }}>
@@ -175,6 +174,7 @@ export default function LoginScreen() {
               placeholder="sampel-ticlyt-migfun-falmel"
               maxLength={27}
               secureTextEntry={!showPassword}
+              keyboardType="visible-password"
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.showPassword}>
               <Text style={styles.showPasswordText}>{showPassword ? 'Hide' : 'Show'}</Text>

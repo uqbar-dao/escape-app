@@ -1,4 +1,5 @@
 import create from "zustand";
+import { APP_URL_REGEX } from "../constants/Webview";
 import storage from "../util/storage";
 import { deSig } from "../util/string";
 
@@ -53,7 +54,15 @@ const useStore = create<Store>((set) => ({
   authCookie: '',
   ships: [],
   setNeedLogin: (needLogin: boolean) => set(() => ({ needLogin })),
-  loadStore: (store: any) => set(() => store),
+  loadStore: (store: any) => set(() => {
+    return {
+      ...store,
+      ships: store.ships.map((s: ShipConnection) => ({
+        ...s,
+        path: APP_URL_REGEX.test(s.currentPath || '') ? s.currentPath : '/apps/escape/'
+      }))
+    };
+  }),
   setShipUrl: (shipUrl: string) => set({ shipUrl }),
   setLoading: (loading: boolean) => set({ loading }),
   setEscapeInstalled: (escapeInstalled: boolean) =>set({ escapeInstalled }),
@@ -61,6 +70,7 @@ const useStore = create<Store>((set) => ({
     const shipConnection = store.ships.find((s) => s.ship === targetShip);
     if (shipConnection) {
       shipConnection.path = path;
+      shipConnection.currentPath = path;
     }
     
     const newStore: any = getNewStore(store, targetShip, shipConnection!);

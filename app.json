@@ -2,7 +2,7 @@
   "expo": {
     "name": "EScape",
     "slug": "escape-app",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "orientation": "portrait",
     "icon": "./assets/images/uqbar-logo.png",
     "notification": {
@@ -43,7 +43,7 @@
         "backgroundColor": "#ffffff"
       },
       "googleServicesFile": "./google-services.json",
-      "versionCode": 8,
+      "versionCode": 9,
       "package": "network.uqbar.escape",
       "permissions": [
         "com.google.android.c2dm.permission.RECEIVE",
