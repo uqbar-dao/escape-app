@@ -51,25 +51,28 @@ export default function ShipsScreen({
 
   const selectShip = useCallback((ship: string) => () => {
     setShip(ship);
-  }, [setShip]);
+    navigation.goBack();
+  }, [setShip, navigation]);
+
+  const styles = getStyles(colorScheme === 'dark')
 
   return (
     <View style={styles.container}>
       <ScrollView style={styles.drawerScroll}>
         <View style={styles.shipEntry}>
           {/* <Sigil ship={ship} /> */}
-          <Text style={styles.primaryShip(colorScheme === 'dark')}>{ship}</Text>
+          <Text style={styles.primaryShip}>{ship}</Text>
         </View>
         {backgroundShips.map(({ ship }) => <View style={styles.row} key={ship}>
           <Pressable key={ship} onPress={selectShip(ship)}>
             <View style={styles.shipEntry}>
               {/* <Sigil ship={ship} /> */}
-              <Text style={styles.secondaryShip(colorScheme === 'dark')}>
+              <Text style={styles.secondaryShip}>
                 {ship}
               </Text>
             </View>
           </Pressable>
-          <Button title="Remove" color={PURPLE} onPress={() => removeShip(s.ship)} />
+          <Button title="Remove" color={PURPLE} onPress={() => removeShip(ship)} />
         </View>)}
       </ScrollView>
       <View
@@ -87,47 +90,49 @@ export default function ShipsScreen({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    height: '100%',
-    padding: 24,
-    paddingTop: 48
-  },
-  drawerScroll: {
-    width: '100%',
-  },
-  row: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    marginTop: 32,
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: "80%",
-  },
-  shipEntry: {
-    width: '100%',
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 8,
-  },
-  primaryShip: (dark: boolean) => ({
-    fontSize: 16,
-    fontWeight: '600',
-    color: dark ? 'white' : 'black',
-    borderBottomColor: dark ? 'white' : 'black',
-    borderBottomWidth: 1
-  }),
-  secondaryShip: (dark: boolean) => ({
-    fontSize: 16,
-    fontWeight: '600',
-    color: dark ? 'white' : 'black'
-  }),
-});
+function getStyles(dark: boolean) {
+  return StyleSheet.create({
+    container: {
+      width: '100%',
+      height: '100%',
+      padding: 24,
+      paddingTop: 48
+    },
+    drawerScroll: {
+      width: '100%',
+    },
+    row: {
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      width: '100%',
+      marginTop: 32,
+    },
+    separator: {
+      marginVertical: 30,
+      height: 1,
+      width: "80%",
+    },
+    shipEntry: {
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 8,
+    },
+    primaryShip: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: dark ? 'white' : 'black',
+      borderBottomColor: dark ? 'white' : 'black',
+      borderBottomWidth: 1
+    },
+    secondaryShip: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: dark ? 'white' : 'black'
+    },
+  });
+}

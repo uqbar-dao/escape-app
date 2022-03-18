@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { scheduleNotificationAsync } from "expo-notifications";
 import { WebViewMessageEvent } from "react-native-webview";
 import * as Notifications from 'expo-notifications';
 
 import useStore, { ShipConnection } from "../hooks/useStore";
 import Webview from "../components/WebView";
-import { AppState, AppStateStatus, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { getNotificationData, getPushNotificationToken } from "../util/notification";
-import { deSig } from "../util/string";
+import { deSig, samePath } from "../util/string";
 
 interface EscapeWindowProps {
   shipConnection: ShipConnection;
@@ -23,39 +22,11 @@ function EscapeWindow({
   const { ship: selectedShip, setShip, removeShip, setPath, setCurrentPath } = useStore();
   const { ship, shipUrl, path, currentPath } = shipConnection;
 
-  useEffect(() => {
-    const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      if (nextAppState.match(/inactive|background/)) {
-        setCurrentPath(ship, '/');
-      }
-    }
-
-    AppState.addEventListener("change", handleAppStateChange);
-  }, []);
-
   const onMessage = (event: WebViewMessageEvent) => {
-    const { type, body, pathname, redirect } = JSON.parse(event.nativeEvent.data);
+    const { type, pathname } = JSON.parse(event.nativeEvent.data);
 
-    if (type === 'hark-notification') {
-      const [redirectBaseUrl] = redirect?.split('?');
-      if (redirectBaseUrl === currentPath) {
-        return;
-      }
-
-      const { title, content } = body;
-      const displayTitle = title.map((part: any) => Object.values(part).join('')).join('');
-      const displayBody = content.map(({ text, ship }: any) => text || ship || '').join('');
-
-      scheduleNotificationAsync({
-        content: {
-          title: displayTitle,
-          body: displayBody,
-          data: { redirect },
-        },
-        trigger: { seconds: 1 }
-      });
-    } else if (type === 'navigation-change') {
-      setCurrentPath(ship, pathname);
+    if (type === 'navigation-change') {
+      setCurrentPath(ship, `/apps/escape${pathname}`);
     } else if (type === 'logout') {
       removeShip(ship);
     }
@@ -66,7 +37,7 @@ function EscapeWindow({
       handleNotification: async (notification) => {
         const { redirect, targetShip } = getNotificationData(notification);
 
-        if (deSig(targetShip) === deSig(selectedShip) && currentPath && redirect.includes(currentPath)) {
+        if (deSig(targetShip) === deSig(selectedShip) && samePath(`/apps/escape${redirect}`, currentPath)) {
           return { shouldShowAlert: false, shouldPlaySound: false, shouldSetBadge: false };
         }
 
@@ -91,11 +62,11 @@ function EscapeWindow({
 
   const url = `${shipUrl}${path || '/apps/escape/'}`.toLowerCase();
   
-  return <Webview {...{ url, onMessage, androidHardwareAccelerationDisabled, pushNotificationsToken, ship }} />;
+  return <Webview {...{ url, shipUrl, onMessage, androidHardwareAccelerationDisabled, pushNotificationsToken, ship }} />;
 }
 
 export default function Escape() {
-  const { ship, shipUrl, authCookie, ships } = useStore();
+  const { ship, ships } = useStore();
   const [token, setToken] = useState('');
 
   useEffect(() => {
@@ -107,16 +78,6 @@ export default function Escape() {
       })
       .catch(console.error);
   }, []);
-
-  const sortedShips = ships.sort((a, b) => {
-    if (a.ship === ship) {
-      return -1;
-    } else if (b.ship === ship) {
-      return 1;
-    } else {
-      return 0;
-    }
-  });
 
   return <>
     {ships.map((s) => <View key={s.ship} style={s.ship === ship ? styles.primary : {}}>
