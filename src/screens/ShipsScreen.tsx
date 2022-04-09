@@ -10,9 +10,14 @@ import { PURPLE } from "../style/colors";
 export default function ShipsScreen({
   navigation,
 }: RootStackScreenProps<"Ships">) {
-  const { ships, ship, setShip, removeShip, removeAllShips, setNeedLogin } = useStore();
+  const { ships, ship, setShip, removeShip, removeAllShips, setNeedLogin, setPath } = useStore();
   const colorScheme = useColorScheme();
   const backgroundShips = ships.filter((s) => s.ship !== ship);
+
+  const handleRefresh = () => {
+    ships.forEach(sc => setPath(sc.ship, '/apps/escape/'));
+    navigation.goBack();
+  };
 
   const handleAdd = () => {
     setShip('none');
@@ -80,6 +85,8 @@ export default function ShipsScreen({
         lightColor="#eee"
         darkColor="rgba(255,255,255,0.1)"
       />
+      <Button title="Refresh all ships" color={PURPLE} onPress={handleRefresh} />
+      <View style={{ height: 24 }} />
       <Button title="Add ship" color={PURPLE} onPress={handleAdd} />
       <View style={{ height: 24 }} />
       <Button title="Clear all ships" color={PURPLE} onPress={showClearAlert} />

@@ -113,7 +113,7 @@ export default function LoginScreen() {
           }
         })
         .catch((err) => {
-          console.log('ERROR LOGGING IN')
+          console.warn('ERROR LOGGING IN')
         })
     }
     setFormLoading(false);
