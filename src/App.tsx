@@ -35,6 +35,8 @@ export default function App() {
       setTimeout(() => setLoading(false), 500)
     }
     loadStorage();
+
+    Notifications.setBadgeCountAsync(0);
   }, []);
 
   const backgroundColor = isDark ? 'black' : 'white';

@@ -3,7 +3,7 @@ import { Alert, AppState, AppStateStatus, BackHandler, Linking, Platform, Pressa
 import { WebView, WebViewMessageEvent, WebViewNavigation } from "react-native-webview";
 import { WebViewErrorEvent, WebViewHttpErrorEvent, WebViewNavigationEvent } from "react-native-webview/lib/WebViewTypes";
 import { Ionicons } from "@expo/vector-icons";
-import { APP_URL_REGEX, ESCAPE_URL_REGEX, GRID_URL_REGEX, LANDSCAPE_URL_REGEX, ESCAPE_DISTRO_SHIP } from '../constants/Webview';
+import { APP_URL_REGEX, ESCAPE_URL_REGEX, GRID_URL_REGEX, ESCAPE_DISTRO_SHIP, INSIDE_APP_URLS } from '../constants/Webview';
 import useStore from "../hooks/useStore";
 
 interface WebviewProps {
@@ -58,7 +58,7 @@ const Webview = ({
   }
 });`
           );
-        }, 10000);
+        }, 5000);
       }
 
       if (GRID_URL_REGEX.test(url) && !escapeInstalled) {
@@ -162,11 +162,19 @@ const Webview = ({
         setPath(ship, appUrl[0]);
       }
     }
+
+    if (!event.loading) {
+      webView?.current?.injectJavaScript('window.isMobileApp = true')
+    }
   }, [url, setCanGoBack, setCurrentUrl]);
 
   const shouldStartLoadWithRequest = useCallback((req) => {
     // open the link in native browser on iOS
-    if (Platform.OS === 'ios' && !req.url.includes(shipUrl)) {
+    const openOutsideApp = Platform.OS === 'ios' &&
+      !req.url.toLowerCase().includes(shipUrl.toLowerCase()) &&
+      !INSIDE_APP_URLS.reduce((acc, cur) => acc || req.url.includes(cur), false);
+
+    if (openOutsideApp) {
       Linking.openURL(req.url);
       return false;
     }
@@ -174,30 +182,25 @@ const Webview = ({
     return true;
   }, [shipUrl]);
   
-  const mobileParam = 'isMobileApp=true';
-  let uri = url;
-  if (ESCAPE_URL_REGEX.test(url)) {
-    uri = `${url}${url.includes('?') ? '&' : '?'}${mobileParam}`;
-  }
-
   return (
     <SafeAreaView style={styles.container}>
       <WebView
         key={webViewKey}
         ref={webView}
-        source={{ uri }}
+        source={{ uri: url }}
         startInLoadingState
         allowsBackForwardNavigationGestures
         scalesPageToFit
         sharedCookiesEnabled
         androidHardwareAccelerationDisabled={androidHardwareAccelerationDisabled}
         forceDarkOn={colorScheme === 'dark'}
-        setSupportMultipleWindows={!uri.includes('/apps/grid/')}
+        setSupportMultipleWindows={!url.includes('/apps/grid/')}
         onMessage={onMessage}
         onNavigationStateChange={onNavStateChange}
         onShouldStartLoadWithRequest={shouldStartLoadWithRequest}
         onHttpError={handleUrlError}
         onLoadEnd={onLoadEnd}
+        injectedJavaScript='window.isMobileApp = true'
         pullToRefreshEnabled
       />
       {!currentUrl.includes(shipUrl.toLowerCase()) && <Pressable style={styles.backButton} onPress={() => webView?.current.goBack()}>
