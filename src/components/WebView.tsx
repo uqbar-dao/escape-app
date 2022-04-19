@@ -3,7 +3,8 @@ import { Alert, AppState, AppStateStatus, BackHandler, Linking, Platform, Pressa
 import { WebView, WebViewMessageEvent, WebViewNavigation } from "react-native-webview";
 import { WebViewErrorEvent, WebViewHttpErrorEvent, WebViewNavigationEvent } from "react-native-webview/lib/WebViewTypes";
 import { Ionicons } from "@expo/vector-icons";
-import { APP_URL_REGEX, ESCAPE_URL_REGEX, GRID_URL_REGEX, ESCAPE_DISTRO_SHIP, INSIDE_APP_URLS } from '../constants/Webview';
+import { Camera } from 'expo-camera';
+import { APP_URL_REGEX, ESCAPE_URL_REGEX, GRID_URL_REGEX, ESCAPE_DISTRO_SHIP, INSIDE_APP_URLS , SCAN_URL_REGEX} from '../constants/Webview';
 import useStore from "../hooks/useStore";
 
 interface WebviewProps {
@@ -40,8 +41,24 @@ const Webview = ({
     return false;
   }, [webView.current]);
 
-  const onLoadEnd = useCallback((e: WebViewNavigationEvent | WebViewErrorEvent) => {
+  const onLoadEnd = useCallback(async (e: WebViewNavigationEvent | WebViewErrorEvent) => {
     if (webView.current && !e.nativeEvent.loading && !e.nativeEvent?.code) {
+      if (SCAN_URL_REGEX.test(url)) {
+        const { status: existingStatus } = await Camera.getCameraPermissionsAsync();
+        let finalStatus = existingStatus;
+  
+        if (existingStatus !== 'denied') {
+          if (existingStatus !== 'granted') {
+            const { status } = await Camera.requestCameraPermissionsAsync();
+            finalStatus = status;
+          }
+          if (finalStatus !== 'granted') {
+            alert('You will not be able to scan QR codes until you enable camera permissions in your settings.');
+            return;
+          }
+        }
+      }
+
       if (ESCAPE_URL_REGEX.test(url) && pushNotificationsToken) {
         setTimeout(() => {
           webView?.current?.injectJavaScript(

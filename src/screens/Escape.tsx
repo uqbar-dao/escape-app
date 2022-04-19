@@ -46,20 +46,6 @@ function EscapeWindow({
     });
   }, [currentPath, selectedShip]);
 
-  useEffect(() => {
-    const subscription = Notifications.addNotificationResponseReceivedListener(notificationResponse => {
-      const { redirect, targetShip } = getNotificationData(notificationResponse?.notification);
-      if (redirect && targetShip) {
-        if (targetShip !== ship) {
-          setShip(targetShip);
-        } else {
-          setPath(ship, `/apps/escape${redirect}`);
-        }
-      }
-    });
-    return subscription.remove;
-  }, []);
-
   const url = `${shipUrl}${path || '/apps/escape/'}`.toLowerCase();
   
   return <Webview {...{ url, shipUrl, onMessage, androidHardwareAccelerationDisabled, pushNotificationsToken, ship }} />;
