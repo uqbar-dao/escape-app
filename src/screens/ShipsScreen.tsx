@@ -15,7 +15,10 @@ export default function ShipsScreen({
   const backgroundShips = ships.filter((s) => s.ship !== ship);
 
   const handleRefresh = () => {
-    ships.forEach(sc => setPath(sc.ship, '/apps/escape/'));
+    ships.forEach(sc => {
+      setPath(sc.ship, '/apps/escape/~landscape')
+      setPath(sc.ship, '/apps/escape/')
+    });
     navigation.goBack();
   };
 
