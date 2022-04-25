@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Alert, AppState, AppStateStatus, BackHandler, Linking, Platform, Pressable, SafeAreaView, StyleSheet, useColorScheme } from "react-native";
+import { Alert, AppState, AppStateStatus, BackHandler, Linking, Platform, Pressable, SafeAreaView, StyleSheet, Text, useColorScheme, View } from "react-native";
 import { WebView, WebViewMessageEvent, WebViewNavigation } from "react-native-webview";
-import { WebViewErrorEvent, WebViewHttpErrorEvent, WebViewNavigationEvent } from "react-native-webview/lib/WebViewTypes";
+import { WebViewErrorEvent, WebViewHttpErrorEvent, WebViewNavigationEvent, WebViewProgressEvent } from "react-native-webview/lib/WebViewTypes";
 import { Ionicons } from "@expo/vector-icons";
 import { Camera } from 'expo-camera';
-import { APP_URL_REGEX, ESCAPE_URL_REGEX, GRID_URL_REGEX, ESCAPE_DISTRO_SHIP, INSIDE_APP_URLS , SCAN_URL_REGEX} from '../constants/Webview';
+import { APP_URL_REGEX, ESCAPE_URL_REGEX, GRID_URL_REGEX, ESCAPE_DISTRO_SHIP, INSIDE_APP_URLS , HANDSHAKE_URL_REGEX} from '../constants/Webview';
 import useStore from "../hooks/useStore";
 
 interface WebviewProps {
@@ -31,6 +31,7 @@ const Webview = ({
   const [currentUrl, setCurrentUrl] = useState(url);
   const [webViewKey, setWebViewKey] = useState(0);
   const [escapeInstalled, setEscapeInstalled] = useState(true);
+  const [installPromptActive, setInstallPromptActive] = useState(false)
   const appState = useRef(AppState.currentState);
 
   const HandleBackPressed = useCallback(() => {
@@ -41,9 +42,23 @@ const Webview = ({
     return false;
   }, [webView.current]);
 
+  const handleEscapeNotInstalled = useCallback(() => {
+    setEscapeInstalled(false);
+    setInstallPromptActive(false)
+    if (setPath) {
+      setPath(ship, '/apps/grid/');
+    }
+  }, [setEscapeInstalled, setInstallPromptActive, setPath])
+
+  const onLoadProgress = useCallback(async (e: WebViewProgressEvent) => {
+    if (e.nativeEvent.title === 'Webpage not available' && ESCAPE_URL_REGEX.test(e.nativeEvent.url)) {
+      handleEscapeNotInstalled();
+    }
+  }, [ship, pushNotificationsToken, webView.current, escapeInstalled, url, setPath]);
+
   const onLoadEnd = useCallback(async (e: WebViewNavigationEvent | WebViewErrorEvent) => {
     if (webView.current && !e.nativeEvent.loading && !e.nativeEvent?.code) {
-      if (SCAN_URL_REGEX.test(url)) {
+      if (HANDSHAKE_URL_REGEX.test(url)) {
         const { status: existingStatus } = await Camera.getCameraPermissionsAsync();
         let finalStatus = existingStatus;
   
@@ -78,7 +93,8 @@ const Webview = ({
         }, 5000);
       }
 
-      if (GRID_URL_REGEX.test(url) && !escapeInstalled) {
+      if (GRID_URL_REGEX.test(url) && !escapeInstalled && !installPromptActive) {
+        setInstallPromptActive(true)
         Alert.alert(
           "Install EScape",
           "EScape is not installed, would you like to install it?",
@@ -142,10 +158,7 @@ const Webview = ({
 
   const handleUrlError = useCallback((event: WebViewHttpErrorEvent) => {
     if (event.nativeEvent.statusCode === 404 && ESCAPE_URL_REGEX.test(url)) {
-      setEscapeInstalled(false);
-      if (setPath) {
-        setPath(ship, '/apps/grid/');
-      }
+      handleEscapeNotInstalled();
     } else if (event.nativeEvent.statusCode > 399) {
       Alert.alert(
         "Error",
@@ -187,9 +200,10 @@ const Webview = ({
 
   const shouldStartLoadWithRequest = useCallback((req) => {
     // open the link in native browser on iOS
-    const openOutsideApp = Platform.OS === 'ios' &&
+    const openOutsideApp = (Platform.OS === 'ios' &&
       !req.url.toLowerCase().includes(shipUrl.toLowerCase()) &&
-      !INSIDE_APP_URLS.reduce((acc, cur) => acc || req.url.includes(cur), false);
+      !INSIDE_APP_URLS.reduce((acc, cur) => acc || req.url.includes(cur), false))
+      || HANDSHAKE_URL_REGEX.test(req.url);
 
     if (openOutsideApp) {
       Linking.openURL(req.url);
@@ -198,7 +212,7 @@ const Webview = ({
 
     return true;
   }, [shipUrl]);
-  
+
   return (
     <SafeAreaView style={styles.container}>
       <WebView
@@ -217,6 +231,7 @@ const Webview = ({
         onShouldStartLoadWithRequest={shouldStartLoadWithRequest}
         onHttpError={handleUrlError}
         onLoadEnd={onLoadEnd}
+        onLoadProgress={onLoadProgress}
         injectedJavaScript='window.isMobileApp = true'
         pullToRefreshEnabled
       />

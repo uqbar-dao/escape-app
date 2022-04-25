@@ -2,7 +2,7 @@
   "expo": {
     "name": "EScape",
     "slug": "escape-app",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "orientation": "portrait",
     "icon": "./assets/images/uqbar-logo.png",
     "notification": {
@@ -35,7 +35,8 @@
     "ios": {
       "infoPlist": {
         "NSCameraUsageDescription": "This app uses your camera to confirm other users' usernames via QR code.",
-        "NSMicrophoneUsageDescription": "This app uses your microhpone to input other users' usernames via voice-to-text."
+        "NSMicrophoneUsageDescription": "This app uses your microhpone to input other users' usernames via voice-to-text.",
+        "UIBackgroundModes": "remote-notification"
       },
       "supportsTablet": true,
       "bundleIdentifier": "network.uqbar.escape",
@@ -47,7 +48,7 @@
         "backgroundColor": "#ffffff"
       },
       "googleServicesFile": "./google-services.json",
-      "versionCode": 12,
+      "versionCode": 13,
       "package": "network.uqbar.escape",
       "permissions": [
         "com.google.android.c2dm.permission.RECEIVE",

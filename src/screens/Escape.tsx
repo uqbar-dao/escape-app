@@ -19,7 +19,7 @@ function EscapeWindow({
   pushNotificationsToken,
   androidHardwareAccelerationDisabled = false
 }: EscapeWindowProps) {
-  const { ship: selectedShip, setShip, removeShip, setPath, setCurrentPath } = useStore();
+  const { ship: selectedShip, removeShip, setCurrentPath } = useStore();
   const { ship, shipUrl, path, currentPath } = shipConnection;
 
   const onMessage = (event: WebViewMessageEvent) => {
