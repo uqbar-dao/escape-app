@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Button, StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as Notifications from 'expo-notifications';
+import * as TaskManager from 'expo-task-manager';
 import * as Network from 'expo-network';
 import { Ionicons } from "@expo/vector-icons";
 
@@ -16,6 +17,17 @@ import storage from "./util/storage";
 import { URBIT_HOME_REGEX } from "./util/regex";
 import { getNotificationData } from './util/notification';
 
+const CLEAR_NOTIFICATIONS_BACKGROUND = 'CLEAR_NOTIFICATIONS_BACKGROUND';
+
+TaskManager.defineTask(CLEAR_NOTIFICATIONS_BACKGROUND, ({ data, error, executionInfo }) => {
+  const payload = data as any;
+  console.log('Received a notification in the background!', data, error, executionInfo);
+  // TODO: improve this to dismiss specific notifications. Unsure how to do this.
+  if (payload.clearNotifications) {
+    Notifications.dismissAllNotificationsAsync();
+  }
+});
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -24,13 +36,7 @@ Notifications.setNotificationHandler({
   }),
 });
 
-let initialRedirect = '', initialTargetShip = '';
-
-Notifications.addNotificationResponseReceivedListener(notificationResponse => {
-  const { redirect, targetShip } = getNotificationData(notificationResponse?.notification);
-  initialRedirect = redirect;
-  initialTargetShip = targetShip;
-})
+Notifications.registerTaskAsync(CLEAR_NOTIFICATIONS_BACKGROUND);
 
 export default function App() {
   const isLoadingComplete = useCachedResources();
@@ -63,14 +69,6 @@ export default function App() {
     checkNetwork();
 
     Notifications.setBadgeCountAsync(0);
-
-    if (initialRedirect && initialTargetShip) {
-      if (initialTargetShip !== ship) {
-        setShip(initialTargetShip);
-      }
-      setPath(initialTargetShip, `/apps/escape/`);
-      setPath(initialTargetShip, `/apps/escape${initialRedirect}`);
-    }
 
     const subscription = Notifications.addNotificationResponseReceivedListener(notificationResponse => {
       const { redirect, targetShip } = getNotificationData(notificationResponse?.notification);
