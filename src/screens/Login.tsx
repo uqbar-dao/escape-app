@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Button, Image, StyleSheet, TextInput, TouchableOpacity } from "react-native";
 
 import { Text, View } from "../components/Themed";
-import useStore from "../hooks/useStore";
+import { useThemeWatcher } from "../hooks/useThemeWatcher";
+import useStore from "../state/useStore";
 import { PURPLE } from "../style/colors";
 import { URBIT_HOME_REGEX } from "../util/regex";
 
@@ -17,6 +18,8 @@ export default function LoginScreen() {
   const [loginProblem, setLoginProblem] = useState<string | null>();
   const [showPassword, setShowPassword] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
+  const { theme } = useThemeWatcher();
+  const styles = getStyles(theme.colors);
 
   useEffect(() => {
     if (shipUrl) {
@@ -121,7 +124,7 @@ export default function LoginScreen() {
 
   if (formLoading) {
     return <View style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
-      <ActivityIndicator size="large" color="#000000" />
+      <ActivityIndicator size="large" color={theme.colors.blue} />
     </View>
   }
 
@@ -145,7 +148,11 @@ export default function LoginScreen() {
             onChangeText={setShipUrlInput}
             value={shipUrlInput}
             placeholder="http(s)://your-ship.net"
+            placeholderTextColor={theme.colors.gray}
             keyboardType="url"
+            autoCompleteType="off"
+            autoCapitalize="none"
+            spellCheck={false}
           />
           {urlProblem && (
             <Text style={{ color: "red" }}>
@@ -164,6 +171,7 @@ export default function LoginScreen() {
             style={styles.input}
             value={ship}
             placeholder="sampel-palnet"
+            placeholderTextColor={theme.colors.gray}
             editable={false}
           />
           <View style={{ position: 'relative' }}>
@@ -172,9 +180,13 @@ export default function LoginScreen() {
               onChangeText={setAccessKeyInput}
               value={accessKeyInput}
               placeholder="sampel-ticlyt-migfun-falmel"
+              placeholderTextColor={theme.colors.gray}
               maxLength={27}
               secureTextEntry={!showPassword}
               keyboardType="visible-password"
+              autoCompleteType="off"
+              autoCapitalize="none"
+              spellCheck={false}
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.showPassword}>
               <Text style={styles.showPasswordText}>{showPassword ? 'Hide' : 'Show'}</Text>
@@ -201,7 +213,7 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   logo: {
     height: 120,
     width: 120,
@@ -211,7 +223,8 @@ const styles = StyleSheet.create({
     marginTop: 12,
     borderWidth: 1,
     padding: 10,
-    backgroundColor: 'white'
+    backgroundColor: colors.white,
+    color: colors.black
   },
   shipInputView: {
     padding: 20,
@@ -230,9 +243,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 8,
     top: 18,
-    color: 'gray',
+    color: colors.black,
   },
   showPasswordText: {
-    color: 'black',
+    color: colors.black,
   },
 });

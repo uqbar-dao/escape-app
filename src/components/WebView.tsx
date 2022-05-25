@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Alert, AppState, AppStateStatus, BackHandler, Linking, Platform, Pressable, SafeAreaView, StyleSheet, Text, useColorScheme, View } from "react-native";
+import { Alert, AppState, AppStateStatus, BackHandler, Dimensions, Linking, Platform, Pressable, SafeAreaView, StyleSheet, Text, useColorScheme, View } from "react-native";
 import { WebView, WebViewMessageEvent, WebViewNavigation } from "react-native-webview";
 import { WebViewErrorEvent, WebViewHttpErrorEvent, WebViewNavigationEvent, WebViewProgressEvent } from "react-native-webview/lib/WebViewTypes";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Camera } from 'expo-camera';
 import { APP_URL_REGEX, ESCAPE_URL_REGEX, GRID_URL_REGEX, ESCAPE_DISTRO_SHIP, INSIDE_APP_URLS , HANDSHAKE_URL_REGEX} from '../constants/Webview';
-import useStore from "../hooks/useStore";
+import useStore from "../state/useStore";
+import { expo } from '../../app.json';
+import { isInternalUrl } from "../util/url";
+import { useNavigation } from "@react-navigation/native";
+import { useThemeWatcher } from "../hooks/useThemeWatcher";
 
 interface WebviewProps {
   url: string;
@@ -13,19 +17,16 @@ interface WebviewProps {
   shipUrl: string;
   pushNotificationsToken?: string;
   onMessage?: (event: WebViewMessageEvent) => void;
-  androidHardwareAccelerationDisabled?: boolean;
 }
 
-const Webview = ({
+const Webview = React.forwardRef(({
   url,
   ship,
   shipUrl,
   pushNotificationsToken,
   onMessage,
-  androidHardwareAccelerationDisabled = false
-}: WebviewProps) => {
+}: WebviewProps, webViewRef: any) => {
   const { setLoading, setPath } = useStore();
-  const webView = useRef<any>(null);
   const colorScheme = useColorScheme();
   const [canGoBack, setCanGoBack] = useState(false);
   const [currentUrl, setCurrentUrl] = useState(url);
@@ -33,14 +34,20 @@ const Webview = ({
   const [escapeInstalled, setEscapeInstalled] = useState(true);
   const [installPromptActive, setInstallPromptActive] = useState(false)
   const appState = useRef(AppState.currentState);
+  const navigation = useNavigation();
+  const { theme: { colors } } = useThemeWatcher();
+
+  const styles = getStyles(colors);
+
+  const setAppVersion = `window.isMobileApp = true; window.mobileAppVersion = '${expo.version}';`;
 
   const HandleBackPressed = useCallback(() => {
-    if (webView?.current) {
-      webView.current?.goBack();
+    if (webViewRef?.current) {
+      webViewRef.current?.goBack();
       return true; // PREVENT DEFAULT BEHAVIOUR (EXITING THE APP)
     }
     return false;
-  }, [webView.current]);
+  }, [webViewRef.current]);
 
   const handleEscapeNotInstalled = useCallback(() => {
     setEscapeInstalled(false);
@@ -54,10 +61,10 @@ const Webview = ({
     if (e.nativeEvent.title === 'Webpage not available' && ESCAPE_URL_REGEX.test(e.nativeEvent.url)) {
       handleEscapeNotInstalled();
     }
-  }, [ship, pushNotificationsToken, webView.current, escapeInstalled, url, setPath]);
+  }, [ship, pushNotificationsToken, webViewRef.current, escapeInstalled, url, setPath]);
 
   const onLoadEnd = useCallback(async (e: WebViewNavigationEvent | WebViewErrorEvent) => {
-    if (webView.current && !e.nativeEvent.loading && !e.nativeEvent?.code) {
+    if (webViewRef.current && !e.nativeEvent.loading && !e.nativeEvent?.code) {
       if (HANDSHAKE_URL_REGEX.test(url)) {
         const { status: existingStatus } = await Camera.getCameraPermissionsAsync();
         let finalStatus = existingStatus;
@@ -76,7 +83,7 @@ const Webview = ({
 
       if (ESCAPE_URL_REGEX.test(url) && pushNotificationsToken) {
         setTimeout(() => {
-          webView?.current?.injectJavaScript(
+          webViewRef?.current?.injectJavaScript(
 `window.api.poke({
   app: "settings-store",
   mark: "settings-event",
@@ -108,7 +115,7 @@ const Webview = ({
               text: "Yes",
               onPress: () => {
                 setTimeout(() => {
-                  webView?.current?.injectJavaScript(
+                  webViewRef?.current?.injectJavaScript(
         `window.docket().requestTreaty('${ESCAPE_DISTRO_SHIP}', 'escape');
         window.docket().installDocket('${ESCAPE_DISTRO_SHIP}', 'escape');`
                   );
@@ -129,7 +136,7 @@ const Webview = ({
         );
       }
     }
-  }, [ship, pushNotificationsToken, webView.current, escapeInstalled, url, setPath]);
+  }, [ship, pushNotificationsToken, webViewRef.current, escapeInstalled, url, setPath]);
 
   useEffect(() => {
     if (Platform.OS === "android") {
@@ -138,7 +145,7 @@ const Webview = ({
 
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (appState.current.match(/inactive|background/) && nextAppState === "active") {
-        webView?.current?.injectJavaScript('window.bootstrapApi(true)');
+        webViewRef?.current?.injectJavaScript('window.bootstrapApi(true)');
       }
 
       appState.current = nextAppState;
@@ -172,7 +179,7 @@ const Webview = ({
           {
             text: "Refresh",
             onPress: () => {
-              webView?.current?.reload()
+              webViewRef?.current?.reload()
             },
             style: "default",
           },
@@ -194,14 +201,21 @@ const Webview = ({
     }
 
     if (!event.loading) {
-      webView?.current?.injectJavaScript('window.isMobileApp = true')
+      webViewRef?.current?.injectJavaScript(setAppVersion);
     }
   }, [url, setCanGoBack, setCurrentUrl]);
 
   const shouldStartLoadWithRequest = useCallback((req) => {
+    if (req.url.includes('/~notifications')) {
+      navigation.navigate('Notifications');
+      return false;
+    } else if (req.url.includes('/~landscape/messages')) {
+      navigation.navigate('Messages');
+      return false;
+    }
     // open the link in native browser on iOS
     const openOutsideApp = (Platform.OS === 'ios' &&
-      !req.url.toLowerCase().includes(shipUrl.toLowerCase()) &&
+      !isInternalUrl(req.url, shipUrl) &&
       !INSIDE_APP_URLS.reduce((acc, cur) => acc || req.url.includes(cur), false))
       || HANDSHAKE_URL_REGEX.test(req.url);
 
@@ -213,17 +227,23 @@ const Webview = ({
     return true;
   }, [shipUrl]);
 
+  // let uri = url;
+  // if (ESCAPE_URL_REGEX.test(url)) {
+  //   uri = `${url}${url.includes('?') ? '&' : '?'}isMobileApp=true&mobileAppVersion=1.1.3`;
+  // }
+
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <WebView
         key={webViewKey}
-        ref={webView}
+        ref={webViewRef}
         source={{ uri: url }}
+        originWhitelist={['http://*', 'https://*', 'about:srcdoc', 'about:blank']}
         startInLoadingState
+        pullToRefreshEnabled
         allowsBackForwardNavigationGestures
         scalesPageToFit
         sharedCookiesEnabled
-        androidHardwareAccelerationDisabled={androidHardwareAccelerationDisabled}
         forceDarkOn={colorScheme === 'dark'}
         setSupportMultipleWindows={!url.includes('/apps/grid/')}
         onMessage={onMessage}
@@ -232,26 +252,24 @@ const Webview = ({
         onHttpError={handleUrlError}
         onLoadEnd={onLoadEnd}
         onLoadProgress={onLoadProgress}
-        injectedJavaScript='window.isMobileApp = true'
-        pullToRefreshEnabled
+        injectedJavaScript={setAppVersion}
       />
-      {!currentUrl.includes(shipUrl.toLowerCase()) && <Pressable style={styles.backButton} onPress={() => webView?.current.goBack()}>
+      {!currentUrl.includes(shipUrl.toLowerCase()) && <Pressable style={styles.backButton} onPress={() => webViewRef?.current.goBack()}>
         <Ionicons name="arrow-back" size={24} color='black' />
       </Pressable>}
-    </SafeAreaView>
+    </View>
   );
-};
+});
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    height: '100%',
     width: '100%',
     position: 'relative',
+    backgroundColor: colors.white,
   },
   webview: {
     flex: 1,
-    height: '100%',
     width: '100%',
   },
   backButton: {

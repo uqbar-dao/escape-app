@@ -1,5 +1,9 @@
+import React from "react";
+import WebView from "react-native-webview";
 import create from "zustand";
+import Urbit from "../api";
 import { APP_URL_REGEX } from "../constants/Webview";
+import { configureApi } from "../hooks/useApi";
 import storage from "../util/storage";
 import { deSig } from "../util/string";
 
@@ -19,6 +23,8 @@ interface Store {
   shipUrl: string;
   authCookie: string;
   ships: ShipConnection[];
+  api: Urbit | null;
+  webViewRef: React.RefObject<WebView> | null;
   setNeedLogin: (needLogin: boolean) => void;
   loadStore: (store: any) => void;
   setShipUrl: (shipUrl: string) => void;
@@ -31,13 +37,16 @@ interface Store {
   removeAllShips: () => void;
   setShip: (ship: string) => void;
   clearShip: () => void;
+  getCurrentPath: () => string;
+  setWebViewRef: (webViewRef: React.RefObject<WebView>) => void;
 }
 
-const getNewStore = (store: Store, targetShip: string, shipConnection: ShipConnection) => {
+const getNewStore = (store: Store, targetShip: string, shipConnection: ShipConnection, api?: Urbit) => {
   const { ship, shipUrl, authCookie, ships } = store;
   const shipSet = Boolean(ship && shipUrl && authCookie);
 
   return {
+    api: api || store.api,
     ships: [...ships.filter((s) => s.ship !== targetShip), shipConnection],
     ship: shipSet ? ship : shipConnection.ship,
     shipUrl: (shipSet ? shipUrl : shipConnection.shipUrl).toLowerCase(),
@@ -45,7 +54,7 @@ const getNewStore = (store: Store, targetShip: string, shipConnection: ShipConne
   };
 }
 
-const useStore = create<Store>((set) => ({
+const useStore = create<Store>((set, get) => ({
   loading: true,
   escapeInstalled: true,
   needLogin: true,
@@ -53,13 +62,25 @@ const useStore = create<Store>((set) => ({
   shipUrl: '',
   authCookie: '',
   ships: [],
+  api: null,
+  webViewRef: null,
   setNeedLogin: (needLogin: boolean) => set(() => ({ needLogin })),
   loadStore: (store: any) => set(() => {
+    window.ship = deSig(store.ship);
+    if (!global.window) {
+      global.window = global;
+    }
+    global.window.ship = deSig(store.ship);
+
+    const api = configureApi(store.ship, store.shipUrl);
+
     return {
       ...store,
+      api,
       ships: store.ships.map((s: ShipConnection) => ({
         ...s,
-        path: APP_URL_REGEX.test(s.currentPath || '') ? s.currentPath : '/apps/escape/'
+        currentPath: '/apps/escape/',
+        path: '/apps/escape/'
       }))
     };
   }),
@@ -91,7 +112,8 @@ const useStore = create<Store>((set) => ({
   }),
   addShip: (shipConnection: ShipConnection) => set((store) => {
     const { ship } = shipConnection;
-    const newStore: any = getNewStore(store, shipConnection.ship, { ...shipConnection, ship: `~${deSig(ship)}` });
+    const api = configureApi(shipConnection.ship, shipConnection.shipUrl);
+    const newStore: any = getNewStore(store, shipConnection.ship, { ...shipConnection, ship: `~${deSig(ship)}` }, api);
     
     storage.save({ key: 'store', data: newStore });
     return newStore;
@@ -119,18 +141,25 @@ const useStore = create<Store>((set) => ({
     return newStore;
   }),
   setShip: (selectedShip: string) => set(({ ships }) => {
+    window.ship = deSig(selectedShip);
+    global.window.ship = deSig(selectedShip);
     const newShip = ships.find(({ ship }) => ship === selectedShip);
-    const newStore = { ships, ship: '', shipUrl: '', authCookie: '' };
+    const newStore: any = { ships, ship: '', shipUrl: '', authCookie: '', api: null };
+
     if (newShip) {
+      const api = configureApi(newShip.ship, newShip.shipUrl);
       newStore.ship = newShip.ship;
       newStore.shipUrl = newShip.shipUrl;
       newStore.authCookie = newShip.authCookie || '';
+      newStore.api = api;
     }
 
     storage.save({ key: 'store', data: newStore });
     return newStore;
   }),
   clearShip: () => set(() => ({ ship: '', shipUrl: '', authCookie: '' })),
+  getCurrentPath: () => get().ships.find(({ ship }) => get().ship === ship)?.currentPath || '',
+  setWebViewRef: (webViewRef: React.RefObject<WebView>) => set({ webViewRef }),
 }));
 
 export default useStore;

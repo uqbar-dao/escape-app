@@ -1,8 +1,8 @@
 import React from "react";
-import { Ionicons } from "@expo/vector-icons";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { TouchableOpacity, StyleSheet, View } from "react-native";
 import useColorScheme from "../../hooks/useColorScheme";
-import useStore from "../../hooks/useStore";
+import useStore from "../../state/useStore";
 
 const GridSelector = ({ navigation }: any) => {
   const { ship, setPath } = useStore();
@@ -11,14 +11,15 @@ const GridSelector = ({ navigation }: any) => {
 
   const goToGrid = () => {
     setPath(ship, '/apps/grid/');
+    navigation.navigate('Tabs', { screen: 'Home' });
   }
 
   return (
-    <Pressable style={styles.changeShip} onPress={goToGrid}>
+    <TouchableOpacity style={styles.changeShip} onPress={goToGrid}>
       <View style={{ display: 'flex', flexDirection: 'row' }}>
         <Ionicons name="apps" size={20} color={isDark ? 'white' : 'black'} />
       </View>
-    </Pressable>
+    </TouchableOpacity>
   );
 };
 

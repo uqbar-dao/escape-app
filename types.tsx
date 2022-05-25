@@ -17,11 +17,20 @@ declare global {
 }
 
 export type RootStackParamList = {
-  Root: NavigatorScreenParams<RootTabParamList> | undefined;
-  EScape: NavigatorScreenParams<RootTabParamList> | undefined;
+  Tabs: NavigatorScreenParams<RootTabParamList> | undefined;
+  // EScape routes
+  ChatResource: { path: string, title?: string };
+  DmResource: { ship: string };
+  NewDm: undefined;
+  // Ancillary routes
   Modal: undefined;
   Ships: undefined;
   NotFound: undefined;
+};
+
+export type MessagesStackParamList = {
+  Messages: NavigatorScreenParams<RootTabParamList> | undefined;
+  MessageChat: NavigatorScreenParams<RootTabParamList> | undefined;
 };
 
 export type RootStackScreenProps<
@@ -29,11 +38,11 @@ export type RootStackScreenProps<
 > = NativeStackScreenProps<RootStackParamList, Screen>;
 
 export type RootTabParamList = {
-  // TabOne: undefined;
-  // TabTwo: undefined;
-  Grid: undefined;
-  Escape: undefined;
-  Bitcoin: undefined;
+  Home: undefined;
+  Messages: undefined;
+  Notifications: undefined;
+  Refresh: undefined;
+  Menu: undefined;
 };
 
 export type RootTabScreenProps<

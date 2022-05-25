@@ -3,7 +3,7 @@ import React, { useCallback } from "react";
 import { Alert, Button, Platform, Pressable, ScrollView, StyleSheet, useColorScheme } from "react-native";
 
 import { Text, View } from "../components/Themed";
-import useStore from "../hooks/useStore";
+import useStore from "../state/useStore";
 import { RootStackScreenProps } from "../../types";
 import { PURPLE } from "../style/colors";
 
@@ -28,9 +28,9 @@ export default function ShipsScreen({
   };
 
   const handleClear = () => {
-    removeAllShips();
+    navigation.popToTop();
     setNeedLogin(true);
-    navigation.goBack();
+    removeAllShips();
   };
 
   const showClearAlert = () => Alert.alert(
@@ -135,14 +135,12 @@ function getStyles(dark: boolean) {
     primaryShip: {
       fontSize: 16,
       fontWeight: '600',
-      color: dark ? 'white' : 'black',
       borderBottomColor: dark ? 'white' : 'black',
       borderBottomWidth: 1
     },
     secondaryShip: {
       fontSize: 16,
       fontWeight: '600',
-      color: dark ? 'white' : 'black'
     },
   });
 }

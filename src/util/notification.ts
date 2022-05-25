@@ -41,7 +41,8 @@ export const getPushNotificationToken = async () => {
 }
 
 export const getNotificationData = (notification?: Notifications.Notification) => {
-  const redirect = notification?.request?.content?.data?.redirect as string;
-  const targetShip = notification?.request?.content?.data?.ship as string;
-  return { redirect, targetShip };
+  const redirect = (notification?.request?.content?.data?.redirect || '') as string;
+  const targetShip = (notification?.request?.content?.data?.ship || '') as string;
+  const clearNotifications = Boolean(notification?.request?.content?.data?.clearNotifications)
+  return { redirect, targetShip, clearNotifications };
 }
